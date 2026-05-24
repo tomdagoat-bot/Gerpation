@@ -1,0 +1,1027 @@
+--[[
+    GetGenv shim — safe to remove if running in a real executor
+]]--
+local FAKEGETGENV
+if not getgenv then
+    FAKEGETGENV = {}
+    function getgenv() return FAKEGETGENV end
+end
+
+--[[
+    Utilities
+]]--
+
+local function Warning(text, object)
+    if object == nil and text == " " then
+        warn("[GERP HUB]: A provided argument doesn't exist! Stopping execution.")
+        return "STOP"
+    elseif text ~= " " then
+        warn("[GERP HUB]: " .. text)
+    end
+end
+
+if getgenv().GerpHubLoaded then
+    Warning("Gerp Hub is already loaded!")
+    return
+end
+getgenv().GerpHubLoaded = true
+
+--[[
+    Services
+]]--
+
+local TweenService     = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Debris           = game:GetService("Debris")
+local Players          = game:GetService("Players")
+local RunService       = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+--[[
+    Constants
+]]--
+
+local Plr      = Players.LocalPlayer
+local PlrGui   = Plr.PlayerGui
+local Mouse    = Plr:GetMouse()
+local Camera   = workspace.CurrentCamera
+local IsMobile = UserInputService.TouchEnabled
+
+local Live = workspace:FindFirstChild("Live")
+
+-- FIX: Added missing TechFx tween infos
+local TweenInfos = {
+    TechClicked  = TweenInfo.new(0.1,  Enum.EasingStyle.Back,  Enum.EasingDirection.InOut),
+    Highlight    = TweenInfo.new(0.15, Enum.EasingStyle.Sine,  Enum.EasingDirection.InOut),
+    BarTween     = TweenInfo.new(0.2,  Enum.EasingStyle.Quad,  Enum.EasingDirection.Out),
+    TechFx       = TweenInfo.new(0.2,  Enum.EasingStyle.Back,  Enum.EasingDirection.Out),
+    TechFxOut    = TweenInfo.new(0.15, Enum.EasingStyle.Sine,  Enum.EasingDirection.In),
+}
+
+local Techs = {"Silent Aim", "Auto Dripz", "Auto Twisted", "Auto Lethal"}
+
+local CooldownValues = {
+    ["Front Dash"] = 5,
+    ["Side Dash"]  = 2,
+    ["Evasive"]    = 30,
+}
+
+-- FIX: Illegal is now a proper set (dictionary) so lookups work correctly
+local KeyMap = {
+    ["Silent Aim"]   = "T",
+    ["Auto Dripz"]   = "E",
+    ["Auto Twisted"] = "R",
+    ["Auto Lethal"]  = "U",
+    ["Lock Target"]  = "Y",
+}
+local Illegal = {["Lock Target"] = true}
+
+--[[
+    Templates
+]]--
+
+local GerpComponents  = ReplicatedStorage:WaitForChild("Gerp Hub")
+local UIComponents    = GerpComponents:WaitForChild("Gui")
+local VFXComponents   = GerpComponents:WaitForChild("VFX")
+local SoundComponents = GerpComponents:WaitForChild("Sounds")
+
+local BillboardGUIS = UIComponents:WaitForChild("Billboard Gui")
+local ScreenGUIS    = UIComponents:WaitForChild("Screen Gui")
+
+local Templates = {
+    Screen = {
+        Cooldown     = ScreenGUIS.Cooldown,
+        Skill        = ScreenGUIS.Skill,
+        Input        = ScreenGUIS.Input,
+        MobileButton = ScreenGUIS.Mobile,
+        Tech         = ScreenGUIS.Tech,
+    },
+    Board = {
+        Skill        = BillboardGUIS.Skill,
+        Cooldowns    = BillboardGUIS.Cooldowns,
+        Counters     = BillboardGUIS.Counters,
+        Info         = BillboardGUIS.Info,
+        SkillsHolder = BillboardGUIS.Skills,
+        ValuesHolder = BillboardGUIS.Values,
+    },
+    VFX = {
+        Counter      = VFXComponents.Counter,
+        Death        = VFXComponents["Death Counter"],
+        Tech         = VFXComponents["Tech Name"],
+        Stare        = VFXComponents.Stare,
+        ["Auto Tech"] = VFXComponents["Auto Tech"],
+    },
+}
+
+local UI            = PlrGui:WaitForChild("Gerpation Hub")
+local CooldownsHolder = UI:WaitForChild("Cooldowns")
+local InputsHolder  = UI:WaitForChild("Inputs")
+local TargetInfo    = UI:WaitForChild("Target Info")
+local TogglesHolder = UI:WaitForChild("Toggles")
+
+--[[
+    Helper
+]]--
+
+local function GetAlpha(current, max)
+    if not current or not max or max == 0 then return 1 end
+    return math.clamp(current / max, 0, 1)
+end
+
+local function KeyCode(key)
+    return typeof(key) == "EnumItem" and key or Enum.KeyCode[key]
+end
+
+--[[
+    ConnectionService
+]]--
+
+local ConnectionService = {}
+ConnectionService.TargetConnections = {}
+ConnectionService.PlayerConnections = {}
+ConnectionService.Delays            = {}
+
+function ConnectionService:NewConnection(name, signal, connType, scope, callback)
+    if Warning(" ", name) == "STOP"
+    or Warning(" ", signal) == "STOP"
+    or Warning(" ", connType) == "STOP"
+    or Warning(" ", scope) == "STOP" then
+        return
+    end
+
+    local container = scope == "Player"
+        and ConnectionService.PlayerConnections
+        or  ConnectionService.TargetConnections
+
+    if container[name] then
+        container[name]:Disconnect()
+        container[name] = nil
+    end
+
+    callback = callback or function() end
+
+    local conn
+    if connType == "Connect" then
+        conn = signal:Connect(callback)
+    elseif connType == "Once" then
+        conn = signal:Once(function(...)
+            callback(...)
+            container[name] = nil
+        end)
+    elseif connType == "Wait" then
+        signal:Wait()
+    end
+
+    container[name] = conn
+    return conn
+end
+
+function ConnectionService.Disconnect(scope, name)
+    if Warning(" ", scope) == "STOP" then return end
+
+    local container = scope == "Player"
+        and ConnectionService.PlayerConnections
+        or  ConnectionService.TargetConnections
+
+    if name then
+        if container[name] then
+            container[name]:Disconnect()
+            container[name] = nil
+        end
+    else
+        for k, v in pairs(container) do
+            v:Disconnect()
+            container[k] = nil
+        end
+    end
+end
+
+function ConnectionService:Delay(name, waitTime, callback)
+    if Warning(" ", name) == "STOP"
+    or Warning(" ", callback) == "STOP" then
+        return
+    end
+
+    if ConnectionService.Delays[name] then
+        task.cancel(ConnectionService.Delays[name])
+        ConnectionService.Delays[name] = nil
+    end
+
+    if waitTime and waitTime > 0 then
+        ConnectionService.Delays[name] = task.delay(waitTime, function()
+            ConnectionService.Delays[name] = nil
+            callback()
+        end)
+    else
+        callback()
+    end
+end
+
+function ConnectionService.Cancel(name)
+    if ConnectionService.Delays[name] then
+        task.cancel(ConnectionService.Delays[name])
+        ConnectionService.Delays[name] = nil
+    end
+end
+
+--[[
+    CFrameService
+]]--
+
+local CFrameService = {}
+local AllAxis = false
+
+function CFrameService.GetPosition(obj)
+    if Warning(" ", obj) == "STOP" then return end
+    return typeof(obj) == "Vector3" and obj or obj.Position
+end
+
+function CFrameService.GetCFrame(obj)
+    if Warning(" ", obj) == "STOP" then return end
+    if typeof(obj) == "CFrame" then return obj end
+    if obj:IsA("BasePart") then return obj.CFrame end
+    return CFrame.new(obj)
+end
+
+function CFrameService.GetDistance(a, b)
+    if Warning(" ", a) == "STOP" or Warning(" ", b) == "STOP" then return end
+    return (CFrameService.GetPosition(a) - CFrameService.GetPosition(b)).Magnitude
+end
+
+function CFrameService:Lerp(a, b, alpha)
+    return CFrameService.GetCFrame(a):Lerp(CFrameService.GetCFrame(b), alpha)
+end
+
+function CFrameService.GetDirection(at, goal)
+    at   = CFrameService.GetPosition(at)
+    goal = CFrameService.GetPosition(goal)
+    return (goal - at).Unit
+end
+
+function CFrameService.LookAt(part, goal)
+    if Warning(" ", part) == "STOP" or Warning(" ", goal) == "STOP" then return end
+    goal = CFrameService.GetPosition(goal)
+
+    if AllAxis then
+        part.CFrame = CFrame.new(part.Position, goal)
+    else
+        local dir = CFrameService.GetDirection(part, goal)
+        dir = Vector3.new(dir.X, 0, dir.Z).Unit
+        part.CFrame = CFrame.new(part.Position)
+            * CFrame.Angles(0, math.atan2(-dir.X, -dir.Z), 0)
+    end
+end
+
+function CFrameService.Tween(part, goal, duration)
+    if Warning(" ", part) == "STOP"
+    or Warning(" ", goal) == "STOP"
+    or Warning(" ", duration) == "STOP" then return end
+
+    local elapsed = 0
+    part.Anchored = true
+
+    ConnectionService:NewConnection("TweenPosition", RunService.Heartbeat, "Connect", "Player", function(dt)
+        if elapsed >= duration then
+            ConnectionService.Disconnect("Player", "TweenPosition")
+            part.Anchored = false
+            return
+        end
+        elapsed += dt
+        part.CFrame = CFrameService:Lerp(part, goal, GetAlpha(elapsed, duration))
+    end)
+end
+
+--[[
+    Character helpers
+]]--
+
+local function GetMe()
+    if not Plr.Character then
+        Plr.CharacterAdded:Wait()
+    end
+    local char = Plr.Character
+    local hrp  = char:WaitForChild("HumanoidRootPart")
+    local hum  = char:WaitForChild("Humanoid")
+    return char, hum, hrp
+end
+
+local function GetInstances(target)
+    -- FIX: guard against nil or string (set after death before respawn)
+    if not target or typeof(target) == "string" then return nil, nil, nil, nil end
+    local hum  = target:FindFirstChildOfClass("Humanoid")
+    local root = target:FindFirstChild("HumanoidRootPart")
+    local plr  = Players:GetPlayerFromCharacter(target)
+    return target, hum, root, plr
+end
+
+local function NearestPlayer(useMouse)
+    local char, _, hrp = GetMe()
+    local pos = useMouse and Mouse.Hit.Position or CFrameService.GetPosition(hrp)
+
+    local nearest, nearestDist = nil, math.huge
+    for _, entity in ipairs(Live:GetChildren()) do
+        if entity == char then continue end
+        local root = entity:FindFirstChild("HumanoidRootPart")
+        if not root then continue end
+        local d = CFrameService.GetDistance(pos, root)
+        if d < nearestDist then
+            nearest     = entity
+            nearestDist = d
+        end
+    end
+    return nearest
+end
+
+--[[
+    SoundService
+]]--
+
+local SoundService = {}
+
+function SoundService.PlaySound(sound)
+    sound = typeof(sound) == "string" and SoundComponents:FindFirstChild(sound) or sound
+    if Warning(" ", sound) == "STOP" then return end
+
+    sound = sound:Clone()
+    sound.Parent = Camera
+    sound:Play()
+    Debris:AddItem(sound, sound.TimeLength)
+end
+
+--[[
+    HighlightService
+]]--
+
+local HighlightService = {}
+
+function HighlightService.FadeIn(highlight, name)
+    highlight.FillTransparency    = 1
+    highlight.OutlineTransparency = 1
+    TweenService:Create(highlight, TweenInfos.Highlight, {
+        FillTransparency    = Templates.VFX[name].FillTransparency,
+        OutlineTransparency = Templates.VFX[name].OutlineTransparency,
+    }):Play()
+end
+
+function HighlightService.FadeOut(highlight)
+    TweenService:Create(highlight, TweenInfos.Highlight, {
+        FillTransparency = 1, OutlineTransparency = 1,
+    }):Play()
+    ConnectionService:Delay("Highlight-FadeOut", TweenInfos.Highlight.Time, function()
+        highlight:Destroy()
+    end)
+end
+
+function HighlightService:Highlight(name, duration)
+    local template = Templates.VFX[name]
+    if not template then Warning("Highlight template not found: " .. tostring(name)) return end
+
+    local h = template:Clone()
+    h.Enabled = true
+    HighlightService.FadeIn(h, name)
+
+    if duration then
+        ConnectionService:Delay("Highlight-Fadein", duration, function()
+            HighlightService.FadeOut(h)
+        end)
+    end
+
+    return h
+end
+
+--[[
+    CountDown — defined early so UpdateEvasive can reference it
+]]--
+
+-- FIX: moved above UpdateEvasive/UpdateHealth callers
+local function CountDown(duration, rate, onTick, onEnd, name)
+    if Warning(" ", duration) == "STOP" then return end
+
+    local t       = duration
+    local elapsed = 0
+    onTick(t)
+
+    ConnectionService:NewConnection(name, RunService.RenderStepped, "Connect", "Player", function(dt)
+        elapsed += dt
+        if elapsed >= rate then
+            elapsed = 0
+            t -= rate
+            if t <= 0 then
+                t = 0
+                onTick(t)
+                if onEnd then onEnd() end
+                ConnectionService.Disconnect("Player", name)
+            else
+                onTick(t)
+            end
+        end
+    end)
+end
+
+--[[
+    Target Info UI
+]]--
+
+local Kills      = TargetInfo:FindFirstChild("Kills")
+local Streak     = TargetInfo:FindFirstChild("Streak")
+local TotalKills = TargetInfo:FindFirstChild("Total Kills")
+local Ping       = TargetInfo:FindFirstChild("Ping")
+
+local Bars       = TargetInfo:FindFirstChild("Values")
+local HealthBar  = Bars:FindFirstChild("Health")
+local EvasiveBar = Bars:FindFirstChild("Evasive")
+local UltimateBar = Bars:FindFirstChild("Ultimate")
+
+local UserLabel = TargetInfo:FindFirstChild("Profile"):WaitForChild("User")
+local ProfilePic = TargetInfo:FindFirstChild("Profile"):WaitForChild("Background"):WaitForChild("Profile Picture")
+
+local function ChangeText(obj, text, name)
+    name = name or obj.Name
+    obj.Text = name .. ": " .. tostring(text)
+end
+
+local function UpdateHealth(alpha, hp)
+    TweenService:Create(HealthBar.Fill, TweenInfos.BarTween, {Size = UDim2.fromScale(alpha, 1)}):Play()
+    ChangeText(HealthBar:FindFirstChild("Title"), math.floor(hp) .. "%", "Health")
+end
+
+local function UpdateUltimate(alpha, value)
+    TweenService:Create(UltimateBar.Fill, TweenInfos.BarTween, {Size = UDim2.fromScale(alpha, 1)}):Play()
+    ChangeText(UltimateBar:FindFirstChild("Title"), math.floor(value) .. "%", "Ultimate")
+end
+
+local function UpdateEvasive(alpha, left)
+    TweenService:Create(EvasiveBar.Fill, TweenInfos.BarTween, {Size = UDim2.fromScale(alpha, 1)}):Play()
+    if alpha > 0 then
+        CountDown(left, 1, function(t)
+            ChangeText(EvasiveBar:FindFirstChild("Title"), t .. "s", "Evasive")
+        end, function()
+            EvasiveBar:FindFirstChild("Title").Text = "Evasive"
+        end, "EvasiveBar")
+    else
+        EvasiveBar:FindFirstChild("Title").Text = "Evasive"
+    end
+end
+
+local function GetProfile(player)
+    if player then
+        local ok, content = pcall(function()
+            return Players:GetUserThumbnailAsync(
+                player.UserId,
+                Enum.ThumbnailType.HeadShot,
+                Enum.ThumbnailSize.Size420x420
+            )
+        end)
+        if ok then return content end
+    end
+    return "rbxassetid://120616225848628"
+end
+
+--[[
+    SilentAimService
+]]--
+
+local SilentAimService = {}
+SilentAimService.Target = nil  -- always a Model or nil (never a bare string while active)
+
+local WasEnabled = false
+local Toggles    = {}
+
+local function DisableStare()
+    ConnectionService.Disconnect("Player", "Stare")
+end
+
+local function EnableStare(overridePart)
+    local _, _, hrp = GetMe()
+
+    ConnectionService:NewConnection("Stare", RunService.RenderStepped, "Connect", "Player", function()
+        local tgt = SilentAimService.Target
+        if overridePart then
+            CFrameService.LookAt(hrp, overridePart)
+        elseif tgt then
+            local root = tgt:FindFirstChild("HumanoidRootPart")
+            if root then CFrameService.LookAt(hrp, root) end
+        end
+    end)
+end
+
+-- FIX: guard Duration nil — pass 0 so Delay fires immediately when no duration given
+function SilentAimService.EnableTemporarly(duration, goal)
+    EnableStare(goal)
+    ConnectionService:Delay("StareEnabled", duration or 0, function()
+        if not Toggles["Silent Aim"] then
+            DisableStare()
+        end
+    end)
+end
+
+function SilentAimService.DisableTemporarly(duration)
+    DisableStare()
+    ConnectionService:Delay("StareEnabled", duration or 0, function()
+        if Toggles["Silent Aim"] then
+            EnableStare()
+        end
+    end)
+end
+
+-- Shared helper to handle "was enabled" restoration
+local function RestoreStare()
+    if WasEnabled then
+        SilentAimService.EnableTemporarly()
+        WasEnabled = false
+    end
+end
+
+local function PauseStare()
+    if Toggles["Silent Aim"] then
+        WasEnabled = true
+    end
+    SilentAimService.DisableTemporarly()
+end
+
+--[[
+    Target information panel
+]]--
+
+local function UpdateTargetPanel(player, target, hum)
+    ConnectionService.Disconnect("Target")
+
+    local hp = GetAlpha(hum.Health, hum.MaxHealth)
+
+    if player then
+        local leaderstats     = player:FindFirstChild("leaderstats")
+        local killsStat       = leaderstats and leaderstats:FindFirstChild("Kills")
+        local totalKillsStat  = leaderstats and leaderstats:FindFirstChild("Total Kills")
+
+        local targetKills      = killsStat      and killsStat.Value      or player:GetAttribute("Kills")
+        local targetTotalKills = totalKillsStat and totalKillsStat.Value or player:GetAttribute("TotalKillsFrb")
+
+        -- FIX: check attribute value via GetAttribute, not use it as a signal directly
+        local targetStreak = player:GetAttribute("CurrentStreak")
+            or target:GetAttribute("CurrentStreak")
+
+        local ultAlpha    = GetAlpha(player:GetAttribute("Ultimate"), 100)
+        local evasiveLeft = target:GetAttribute("Evasive") or 0
+        local evasiveAlpha = GetAlpha(evasiveLeft, CooldownValues["Evasive"])
+
+        ChangeText(Kills,      targetKills)
+        ChangeText(Streak,     targetStreak)
+        ChangeText(TotalKills, targetTotalKills)
+        UpdateUltimate(ultAlpha, ultAlpha * 100)
+        UpdateEvasive(evasiveAlpha, evasiveLeft)
+
+        if killsStat then
+            ConnectionService:NewConnection("Kills", killsStat:GetPropertyChangedSignal("Value"), "Connect", "Target", function()
+                ChangeText(Kills, killsStat.Value)
+            end)
+        else
+            ConnectionService:NewConnection("Kills", player:GetAttributeChangedSignal("Kills"), "Connect", "Target", function()
+                ChangeText(Kills, player:GetAttribute("Kills"))
+            end)
+        end
+
+        if totalKillsStat then
+            ConnectionService:NewConnection("Total Kills", totalKillsStat:GetPropertyChangedSignal("Value"), "Connect", "Target", function()
+                ChangeText(TotalKills, totalKillsStat.Value)
+            end)
+        else
+            ConnectionService:NewConnection("Total Kills", player:GetAttributeChangedSignal("TotalKillsFrb"), "Connect", "Target", function()
+                ChangeText(TotalKills, player:GetAttribute("TotalKillsFrb"))
+            end)
+        end
+
+        -- FIX: pick the correct signal source based on where the attribute actually lives
+        local streakSignal = player:GetAttribute("CurrentStreak") ~= nil
+            and player:GetAttributeChangedSignal("CurrentStreak")
+            or  target:GetAttributeChangedSignal("CurrentStreak")
+
+        ConnectionService:NewConnection("Streak", streakSignal, "Connect", "Target", function()
+            local s = player:GetAttribute("CurrentStreak") or target:GetAttribute("CurrentStreak")
+            ChangeText(Streak, s)
+        end)
+
+        UserLabel.Text = player.DisplayName
+    else
+        UserLabel.Text = target.Name
+        UpdateUltimate(1, 100)
+        UpdateEvasive(0, 0)
+    end
+
+    Kills.Visible      = player ~= nil
+    TotalKills.Visible = player ~= nil
+    Streak.Visible     = player ~= nil
+
+    ProfilePic.Image = GetProfile(player)
+    UpdateHealth(hp, hp * 100)
+
+    ConnectionService:NewConnection("Health", hum.HealthChanged, "Connect", "Target", function()
+        local a = GetAlpha(hum.Health, hum.MaxHealth)
+        UpdateHealth(a, a * 100)
+    end)
+
+    ConnectionService:NewConnection("TargetDied", hum.Died, "Once", "Target", function()
+        PauseStare()
+        -- Keep target name for respawn tracking
+        SilentAimService.TargetName = target.Name
+        SilentAimService.Target     = nil
+    end)
+end
+
+local function TargetInformation(enabled)
+    TargetInfo.Visible = enabled
+    if enabled then
+        local target, hum, _, player = GetInstances(SilentAimService.Target)
+        if target and hum then
+            UpdateTargetPanel(player, target, hum)
+        end
+    else
+        ConnectionService.Disconnect("Target")
+    end
+end
+
+--[[
+    Tech callbacks
+]]--
+
+local TechCallbacks = {
+    Enabled = {
+        ["Silent Aim"] = EnableStare,
+
+        ["Lock Target"] = function()
+            local nearest = NearestPlayer(not IsMobile)
+            if not nearest then return end
+
+            if SilentAimService.Target == nearest then
+                -- Deselect
+                local old = SilentAimService.Target
+                SilentAimService.Target = nil
+                DisableStare()
+                local stare = old and old:FindFirstChild("Stare")
+                if stare then HighlightService.FadeOut(stare) end
+                TargetInformation(false)
+            else
+                -- Switch target
+                if SilentAimService.Target then
+                    local stare = SilentAimService.Target:FindFirstChild("Stare")
+                    if stare then HighlightService.FadeOut(stare) end
+                end
+                SilentAimService.Target = nearest
+                if Toggles["Silent Aim"] then EnableStare() end
+                local h = HighlightService:Highlight("Stare")
+                if h then h.Parent = nearest end
+                TargetInformation(true)
+            end
+        end,
+    },
+    Disabled = {
+        ["Silent Aim"] = DisableStare,
+    },
+}
+
+--[[
+    Toggle buttons
+]]--
+
+local function EnabledFormat(enabled)
+    return enabled
+        and "<font color='rgb(0,255,0)'>Enabled</font>"
+        or  "<font color='rgb(255,0,0)'>Disabled</font>"
+end
+
+local function ToggleButton(name, onEnabled, onDisabled)
+    if Toggles[name] == nil then
+        Warning("Toggle '" .. name .. "' not pre-registered in Toggles table")
+        return
+    end
+
+    local btn = Templates.Screen.Tech:Clone()
+    btn.Parent = TogglesHolder
+    btn.Name   = name
+
+    ChangeText(btn:FindFirstChild("TechName"), EnabledFormat(Toggles[name]), name)
+
+    local baseSize = btn.Size
+    local sx, sy   = baseSize.X, baseSize.Y
+
+    btn:GetAttributeChangedSignal("Toggled"):Connect(function()
+        SoundService.PlaySound("Click")
+        TweenService:Create(btn, TweenInfos.TechClicked,
+            {Size = UDim2.new(sx.Scale, sx.Offset, sy.Scale * 1.1, sy.Offset)}):Play()
+        ChangeText(btn:FindFirstChild("TechName"), EnabledFormat(Toggles[name]), name)
+
+        if Toggles[name] and onEnabled then
+            onEnabled()
+        elseif not Toggles[name] and onDisabled then
+            onDisabled()
+        end
+
+        local h = HighlightService:Highlight("Auto Tech", 0.3)
+        if h then h.Parent = GetMe() end
+        SoundService.PlaySound("Chant")
+
+        task.wait(TweenInfos.TechClicked.Time)
+        TweenService:Create(btn, TweenInfos.TechClicked, {Size = baseSize}):Play()
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        Toggles[name] = not Toggles[name]
+        btn:SetAttribute("Toggled", not btn:GetAttribute("Toggled"))
+    end)
+end
+
+--[[
+    Input labels
+]]--
+
+for tech, key in pairs(KeyMap) do
+    if Illegal[tech] then continue end
+    local label = Templates.Screen.Input:Clone()
+    label.Parent = InputsHolder
+    label:FindFirstChild("InputName").Text = tech .. ": [" .. key .. "]"
+end
+
+--[[
+    Keyboard handler
+]]--
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+
+    for tech, key in pairs(KeyMap) do
+        if input.KeyCode == KeyCode(key) then
+            if not Illegal[tech] then
+                Toggles[tech] = not Toggles[tech]
+                local btn = TogglesHolder:FindFirstChild(tech)
+                if btn then
+                    btn:SetAttribute("Toggled", not btn:GetAttribute("Toggled"))
+                end
+            else
+                -- Illegal techs (like Lock Target) fire directly
+                if TechCallbacks.Enabled[tech] then
+                    TechCallbacks.Enabled[tech]()
+                end
+            end
+            break
+        end
+    end
+end)
+
+--[[
+    Register toggles
+]]--
+
+for _, tech in ipairs(Techs) do
+    Toggles[tech] = false
+    ToggleButton(tech, TechCallbacks.Enabled[tech], TechCallbacks.Disabled[tech])
+end
+
+--[[
+    Mobile button
+]]--
+
+if IsMobile then
+    InputsHolder.Visible = false
+    local mobileBtn = Templates.Screen.MobileButton:Clone()
+    mobileBtn.Parent = TogglesHolder
+
+    local baseSize = mobileBtn.Size
+    local sx, sy   = baseSize.X, baseSize.Y
+
+    mobileBtn.MouseButton1Click:Connect(function()
+        TechCallbacks.Enabled["Lock Target"]()
+        SoundService.PlaySound("Mobile")
+        TweenService:Create(mobileBtn, TweenInfos.TechClicked,
+            {Size = UDim2.new(sx.Scale, sx.Offset, sy.Scale * 1.1, sy.Offset)}):Play()
+        task.wait(TweenInfos.TechClicked.Time)
+        TweenService:Create(mobileBtn, TweenInfos.TechClicked, {Size = baseSize}):Play()
+    end)
+end
+
+--[[
+    Cooldown UI
+]]--
+
+local function Cooldown(name)
+    if Warning(" ", name) == "STOP" then return end
+    local cd = Templates.Screen.Cooldown
+    if not cd then return end
+    cd = cd:Clone()
+    cd.Parent = CooldownsHolder
+    cd:FindFirstChild("Title").Text = name
+    cd.Name = name
+end
+
+for skill in pairs(CooldownValues) do
+    Cooldown(skill)
+end
+
+local function CDTrigger(name)
+    local cd = CooldownsHolder:FindFirstChild(name)
+    if not cd then return end
+
+    local duration = CooldownValues[name]
+    cd:FindFirstChild("Fill").Size = UDim2.fromScale(1, 1)
+    TweenService:Create(cd:FindFirstChild("Fill"), TweenInfo.new(duration, Enum.EasingStyle.Linear),
+        {Size = UDim2.fromScale(0, 1)}):Play()
+
+    CountDown(duration, 1, function(t)
+        cd:FindFirstChild("Title").Text = t > 0 and (name .. ": " .. t .. "s") or name
+    end, function()
+        cd:FindFirstChild("Title").Text = name
+    end, name)
+end
+
+--[[
+    TechFx — defined before AllTechs so it can be called inside them
+]]--
+
+local function TechFx(name)
+    if Warning(" ", name) == "STOP" then return end
+    local char = GetMe()
+    local head = char:FindFirstChild("Head")
+    if not head then return end
+
+    local gui = Templates.VFX.Tech
+    if not gui then return end
+    gui = gui:Clone()
+    gui.Parent = head
+    gui.Size   = UDim2.fromScale(0, 0)
+
+    local label = gui:FindFirstChildOfClass("TextLabel")
+    if label then label.Text = name:upper() end
+
+    TweenService:Create(gui, TweenInfos.TechFx, {Size = Templates.VFX.Tech.Size}):Play()
+    task.delay(TweenInfos.TechFx.Time, function()
+        TweenService:Create(gui, TweenInfos.TechFxOut, {Size = UDim2.fromScale(0, 0)}):Play()
+        task.delay(TweenInfos.TechFxOut.Time, function()
+            gui:Destroy()
+        end)
+    end)
+end
+
+--[[
+    Dash helpers
+]]--
+
+local FrontDashTick = 0
+
+local function IsDashOnCD()
+    if workspace:GetAttribute("NoDashCooldown") then return false end
+    return (tick() - FrontDashTick) < CooldownValues["Front Dash"]
+end
+
+local function IsShiftLocked()
+    return UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
+end
+
+local function FrontDash()
+    local char = GetMe()
+    local comm = char and char:FindFirstChild("Communicate")
+    if comm then
+        comm:FireServer({Dash = Enum.KeyCode.W, Key = Enum.KeyCode.Q, Goal = "KeyPress"})
+    end
+end
+
+--[[
+    AllTechs
+]]--
+
+local AllTechs = {
+    ["Auto Twisted"] = function(targetRoot)
+        local _, hum, root = GetMe()
+        if not root or not targetRoot then
+            Warning("One of the roots doesn't exist for Auto Twisted")
+            return
+        end
+
+        TechFx("Twisted")
+        hum.AutoRotate = false
+        SilentAimService.DisableTemporarly(0.6)
+        FrontDash()
+
+        local cf = CFrameService.GetCFrame(root)
+        CFrameService.LookAt(root, cf * CFrame.new(6,  0,  2)) task.wait(0.1)
+        CFrameService.LookAt(root, cf * CFrame.new(8,  0, -6)) task.wait(0.1)
+        CFrameService.LookAt(root, cf * CFrame.new(0,  0,-12)) task.wait(0.4)
+
+        SilentAimService.EnableTemporarly(0.3, targetRoot)
+        hum.AutoRotate = true
+    end,
+
+    -- FIX: Auto Dripz now has a real placeholder so it doesn't silently fail;
+    -- fill in your actual logic here
+    ["Auto Dripz"] = function(targetRoot)
+        if not targetRoot then return end
+        TechFx("Dripz")
+        -- TODO: implement Auto Dripz logic
+    end,
+}
+
+--[[
+    Animation IDs
+]]--
+
+local UppercutIDS = {
+    ["rbxassetid://10503381238"] = true,
+    ["rbxassetid://13379003796"] = true,
+}
+
+local ForthIDS = {
+    ["rbxassetid://13294471966"] = true,
+    ["rbxassetid://10469643643"] = true,
+    ["rbxassetid://13295936866"] = true,
+    ["rbxassetid://13378708199"] = true,
+    ["rbxassetid://15162694192"] = true,
+    ["rbxassetid://16552234590"] = true,
+    ["rbxassetid://17889290569"] = true,
+    ["rbxassetid://134775406437626"] = true,
+    ["rbxassetid://17325537719"] = true,
+}
+
+--[[
+    MouseBehavior (shift-lock) handler
+]]--
+
+UserInputService:GetPropertyChangedSignal("MouseBehavior"):Connect(function()
+    if UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter then
+        PauseStare()
+    else
+        RestoreStare()
+    end
+end)
+
+--[[
+    Initialize per-character connections
+]]--
+
+local function Initialize()
+    local char, hum, hrp = GetMe()
+    local animator = hum:FindFirstChildOfClass("Animator")
+
+    ConnectionService:NewConnection("Died", hum.Died, "Once", "Player", function()
+        ConnectionService.Disconnect("Player")
+    end)
+
+    ConnectionService:NewConnection("AncestryChanged", char.AncestryChanged, "Once", "Player", function()
+        ConnectionService.Disconnect("Player")
+    end)
+
+    ConnectionService:NewConnection("AnimationPlayed", animator.AnimationPlayed, "Connect", "Player",
+        function(track)
+            local anim = track.Animation
+            -- Use nearest to the player, not to mouse, for tech triggers
+            local target, _, targetRoot = GetInstances(NearestPlayer(false))
+
+            if UppercutIDS[anim.AnimationId] then
+                ConnectionService:NewConnection("UppercutHit",
+                    track:GetMarkerReachedSignal("hitreg"), "Once", "Player", function()
+                        if Toggles["Auto Dripz"] then
+                            AllTechs["Auto Dripz"](targetRoot)
+                        end
+                    end)
+
+            elseif ForthIDS[anim.AnimationId] then
+                ConnectionService:NewConnection("ForthHit",
+                    track:GetMarkerReachedSignal("hitreg"), "Once", "Player", function()
+                        if Toggles["Auto Twisted"] then
+                            AllTechs["Auto Twisted"](targetRoot)
+                        end
+                    end)
+            end
+        end)
+
+    ConnectionService:NewConnection("Ragdolled", char.ChildAdded, "Connect", "Player", function(child)
+        if child.Name == "Ragdoll" then PauseStare() end
+    end)
+
+    ConnectionService:NewConnection("Unragdolled", char.ChildRemoved, "Connect", "Player", function(child)
+        if child.Name == "Ragdoll" then RestoreStare() end
+    end)
+end
+
+Initialize()
+Plr.CharacterAdded:Connect(Initialize)
+
+--[[
+    Respawn tracking — re-lock onto target when they come back
+]]--
+
+workspace.Live.ChildAdded:Connect(function(guy)
+    -- FIX: compare against stored name (string), target itself may be nil after death
+    if guy.Name == SilentAimService.TargetName and WasEnabled then
+        SilentAimService.Target     = guy
+        SilentAimService.TargetName = nil
+
+        local h = HighlightService:Highlight("Stare")
+        if h then h.Parent = guy end
+
+        TargetInformation(true)
+        EnableStare()
+        WasEnabled = false
+    end
+end)
+
+--[[
+    Loaded
+]]--
+print("[GERP HUB]: Loaded successfully.")
