@@ -1,3 +1,4 @@
+
 local function Warning(text, object)
 	if object == nil and text == " " then
 		warn("[GERP HUB]: A provided argument doesn't exist! Stopping execution.")
@@ -897,7 +898,7 @@ local AllTechs = {
 		SilentAimService.EnableTemporarly(0.5,targetRoot)
         print("looking at root for 0.5s")
 
-		repeat task.wait() print("waiting for less than 2 distance") until CFrameService.GetDistance(hrp,targetRoot) <= 2
+		repeat task.wait() print("waiting for less than 4 distance") until CFrameService.GetDistance(hrp,targetRoot) <= 4
         SilentAimService.DisableTemporarly(1)
 
 		CFrameService.LookAt(hrp,targetRoot.CFrame)
@@ -905,7 +906,7 @@ local AllTechs = {
 
 		task.wait(0.2)
 
-		repeat task.wait() print("waiting for 5 distance") until CFrameService.GetDistance(hrp,targetRoot) >= 5
+		repeat task.wait() print("waiting for 7 distance") until CFrameService.GetDistance(hrp,targetRoot) >= 7
 
 		CFrameService.LookAt(hrp,targetRoot.CFrame)
         print("looked at root")
