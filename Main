@@ -1,4 +1,3 @@
-
 local function Warning(text, object)
 	if object == nil and text == " " then
 		warn("[GERP HUB]: A provided argument doesn't exist! Stopping execution.")
@@ -61,7 +60,6 @@ local Templates = {
 	Screen = {
 		Cooldown     = ScreenGUIS.Cooldown,
 		Skill        = ScreenGUIS.Skill,
-		Input        = ScreenGUIS.Input,
 		MobileButton = ScreenGUIS.Mobile,
 		Tech         = ScreenGUIS.Tech,
 	},
@@ -87,7 +85,6 @@ VFXComponents["Auto Tech"].OutlineColor = Color3.new(0.95,0.1,0.1)
 
 local UI            = PlrGui:WaitForChild("Gerpation Hub")
 local CooldownsHolder = UI:WaitForChild("Cooldowns")
-local InputsHolder  = UI:WaitForChild("Inputs")
 local TargetInfo    = UI:WaitForChild("Target Info")
 local TogglesHolder = UI:WaitForChild("Toggles")
 
@@ -705,13 +702,6 @@ local function ToggleButton(name, onEnabled, onDisabled)
 	end)
 end
 
-for tech, key in pairs(KeyMap) do
-	if Illegal[tech] then continue end
-	local label = Templates.Screen.Input:Clone()
-	label.Parent = InputsHolder
-	label:FindFirstChild("InputName").Text = tech .. ": [" .. key .. "]"
-end
-
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 
@@ -744,7 +734,6 @@ end
 ]]--
 
 if IsMobile then
-	InputsHolder.Visible = false
 	local mobileBtn = Templates.Screen.MobileButton:Clone()
 	mobileBtn.Parent = TogglesHolder
 
@@ -947,8 +936,6 @@ UserInputService:GetPropertyChangedSignal("MouseBehavior"):Connect(function()
 		RestoreStare()
 	end
 end)
-
-InputsHolder.Visible = false
 
 local function PressKey(Key : Enum.KeyCode,Duration)
 	if Warning(" ",Key) == "STOP" then
