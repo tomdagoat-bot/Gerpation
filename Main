@@ -964,10 +964,10 @@ local HadRagdoll = false
 
 getgenv().CFrameOffset = CFrame.new(0,5,0.1)
 getgenv().JumpDuration = 0.3
-getgenv().Y = 45
+getgenv().Y = 53
 
 getgenv().CFrameManipula = false
-getgenv().NoCollide = true
+getgenv().NoCollide = false
 
 local function Jump()
 	local _,Humanoid = GetMe()
