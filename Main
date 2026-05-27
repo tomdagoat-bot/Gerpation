@@ -693,6 +693,7 @@ local function Chant()
 	local fx = Templates.VFX.Chant:Clone()
 	fx.Parent = workspace.Thrown
 	fx.CFrame = GetMe():FindFirstChild("Head").CFrame
+	print("fx")
 	
 	for _, v in fx.Attachment:GetChildren() do
 		if v:IsA("ParticleEmitter") then
@@ -716,6 +717,7 @@ local function ToggleButton(name, onEnabled, onDisabled)
 	local btn = Templates.Screen.Tech:Clone()
 	btn.Parent = TogglesHolder
 	btn.Name   = name
+	btn.Text = " "
 
 	ChangeText(btn:FindFirstChild("TechName"), EnabledFormat(Toggles[name]), name)
 
