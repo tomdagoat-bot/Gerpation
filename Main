@@ -56,6 +56,8 @@ local SoundComponents = GerpComponents:WaitForChild("Sounds")
 local BillboardGUIS = UIComponents:WaitForChild("Billboard Gui")
 local ScreenGUIS    = UIComponents:WaitForChild("Screen Gui")
 
+local OnLeaving = GerpComponents:FindFirstChild("OnLeaving")
+
 local Templates = {
 	Screen = {
 		Cooldown     = ScreenGUIS.Cooldown,
@@ -80,9 +82,6 @@ local Templates = {
 	},
 }
 
-VFXComponents["Auto Tech"].FillTransparency = 0.35
-VFXComponents["Auto Tech"].OutlineColor = Color3.new(0.95,0.1,0.1)
-
 local UI            = PlrGui:WaitForChild("Gerpation Hub")
 local CooldownsHolder = UI:WaitForChild("Cooldowns")
 local TargetInfo    = UI:WaitForChild("Target Info")
@@ -100,7 +99,7 @@ end
 local ConnectionService = {}
 ConnectionService.TargetConnections = {}
 ConnectionService.PlayerConnections = {}
-ConnectionService.Delays            = {}
+ConnectionService.Delays            		 = {}
 
 function ConnectionService:NewConnection(name, signal, connType, scope, callback)
 	if Warning(" ", name) == "STOP"
@@ -193,7 +192,7 @@ function CFrameService.GetPosition(obj)
 end
 
 function CFrameService.GetCFrame(obj)
-    if Warning(" ", obj) == "STOP" then return end
+	if Warning(" ", obj) == "STOP" then return end
 	if typeof(obj) == "function" then obj = obj() end
 	if typeof(obj) == "CFrame" then return obj end
 	if typeof(obj) == "Vector3" then return CFrame.new(obj) end
@@ -202,8 +201,8 @@ end
 
 function CFrameService.GetDistance(a, b)
 	if Warning(" ", a) == "STOP" or Warning(" ", b) == "STOP" then return end
-    local dis = (CFrameService.GetPosition(a) - CFrameService.GetPosition(b)).Magnitude
-    print(dis)
+	local dis = (CFrameService.GetPosition(a) - CFrameService.GetPosition(b)).Magnitude
+	print(dis)
 	return math.round(dis)
 end
 
@@ -265,7 +264,7 @@ function CFrameService.Tween(part, goal, duration,lookat)
 				hum.WalkSpeed = 16
 				hum.JumpPower = 45
 			end
-            part.CFrame = goal
+			part.CFrame = goal
 			return
 		end
 		elapsed += dt
@@ -497,7 +496,13 @@ local function PauseStare()
 	DisableStare()
 end
 
-local function UpdateInfo(player, target, hum)
+Players.PlayerRemoving:Connect(function(LeavingPlayer : Player)
+	if LeavingPlayer == Players:GetPlayerFromCharacter(SilentAimService.Target) then
+		OnLeaving:Fire()
+	end
+end)
+
+local function UpdateInfo(player : Player, target, hum)
 	ConnectionService.Disconnect("Target")
 
 	local hp = GetAlpha(hum.Health, hum.MaxHealth)
@@ -505,6 +510,16 @@ local function UpdateInfo(player, target, hum)
 	Kills.Visible      = player ~= nil
 	TotalKills.Visible = player ~= nil
 	Streak.Visible     = player ~= nil
+	
+	local function EndIt()
+		DisableStare()
+		SilentAimService.TargetName   = target.Name
+		SilentAimService.HadTarget    = true 
+		SilentAimService.Target       = nil
+		local stare = target:FindFirstChild("Stare")
+		if stare then HighlightService.FadeOut(stare) end
+		ConnectionService.Disconnect("Target")
+	end
 
 	if player then
 		local leaderstats     = player:FindFirstChild("leaderstats")
@@ -571,6 +586,10 @@ local function UpdateInfo(player, target, hum)
 		end)
 
 		UserLabel.Text = player.DisplayName
+		
+		ConnectionService:NewConnection("PlayerLeft",OnLeaving.Event,"Target",function()
+			EndIt()
+		end)
 	else
 		UserLabel.Text = target.Name
 		UpdateUltimate(1, 100)
@@ -581,23 +600,18 @@ local function UpdateInfo(player, target, hum)
 	UpdateHealth(hp, hp * 100)
 
 	ConnectionService:NewConnection("Health", hum.HealthChanged, "Connect", "Target", function()
+		if hum.Health <= 0 then
+			EndIt()
+			return
+		end
 		local a = GetAlpha(hum.Health, hum.MaxHealth)
 		UpdateHealth(a, a * 100)
 	end)
-	
-	local function EndIt()
-		DisableStare()
-		SilentAimService.TargetName   = target.Name
-		SilentAimService.HadTarget    = true 
-		SilentAimService.Target       = nil
-		local stare = target:FindFirstChild("Stare")
-		if stare then HighlightService.FadeOut(stare) end
-	end
-	
+
 	ConnectionService:NewConnection("TargetDied", hum.Died, "Once", "Target", function()
 		EndIt()
 	end)
-	
+
 	ConnectionService:NewConnection("Daddy Gone For Milkies", target.AncestryChanged, "Once", "Target", function()
 		EndIt()
 	end)
@@ -661,6 +675,8 @@ local function EnabledFormat(enabled)
 		or  "<font color='rgb(255,0,0)'>Disabled</font>"
 end
 
+local Debounce = false
+
 local function ToggleButton(name, onEnabled, onDisabled)
 	if Toggles[name] == nil then
 		Warning("Toggle '" .. name .. "' not pre-registered in Toggles table")
@@ -677,7 +693,8 @@ local function ToggleButton(name, onEnabled, onDisabled)
 	local sx, sy   = baseSize.X, baseSize.Y
 
 	btn:GetAttributeChangedSignal("Toggled"):Connect(function()
-		SoundService.PlaySound("Click")
+		repeat task.wait() until not Debounce
+		Debounce = true
 		TweenService:Create(btn, TweenInfos.TechClicked,
 			{Size = UDim2.new(sx.Scale, sx.Offset, sy.Scale * 1.1, sy.Offset)}):Play()
 		ChangeText(btn:FindFirstChild("TechName"), EnabledFormat(Toggles[name]), name)
@@ -688,12 +705,13 @@ local function ToggleButton(name, onEnabled, onDisabled)
 			onDisabled()
 		end
 
-		local h = HighlightService:Highlight("Auto Tech", 0.3)
+		local h = HighlightService:Highlight("Auto Tech", 0.4)
 		if h then h.Parent = GetMe() end
 		SoundService.PlaySound("Chant")
 
 		task.wait(TweenInfos.TechClicked.Time)
 		TweenService:Create(btn, TweenInfos.TechClicked, {Size = baseSize}):Play()
+		Debounce = false
 	end)
 
 	btn.MouseButton1Click:Connect(function()
@@ -784,8 +802,6 @@ local function CDTrigger(name)
 	end, name)
 end
 
-Templates.VFX.Tech.Size = UDim2.fromScale(10,2)
-
 local function TechFx(name)
 	if Warning(" ", name) == "STOP" then return end
 	local char = GetMe()
@@ -865,40 +881,40 @@ local AllTechs = {
 
 		for _, l in char:GetChildren() do
 			if l:IsA("Part") then
-				l.CanCollide = getgenv().NoCollide
+				l.CanCollide = false
 			end
 		end
 
-        local Offset = origin == "Front" and CFrame.new(0,0,12) or CFrame.new(0,0,-12)
+		local Offset = origin == "Front" and CFrame.new(0,0,12) or CFrame.new(0,0,-12)
 
-        print("looked at opposite direction")
+		print("looked at opposite direction")
 		CFrameService.LookAt(hrp,targetRoot.CFrame * Offset)
 
 		FrontDash()
 
-        local look = hrp.CFrame.LookVector
-        hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0,getgenv().Y,0)
-        print("float")
+		local look = hrp.CFrame.LookVector
+		hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0,53,0)
+		print("float")
 
-        task.wait(0.15)
+		task.wait(0.15)
 
-        repeat task.wait() print("waiting for Z distance") until CFrameService.GetDistance(hrp,targetRoot) >= math.abs(Offset.Z)
+		repeat task.wait() print("waiting for Z distance") until CFrameService.GetDistance(hrp,targetRoot) >= math.abs(Offset.Z)
 
 		SilentAimService.EnableTemporarly(0.5,targetRoot)
-        print("looking at root for 0.5s")
+		print("looking at root for 0.5s")
 
 		repeat task.wait() print("waiting for less than 4 distance") until CFrameService.GetDistance(hrp,targetRoot) <= 4
-        SilentAimService.DisableTemporarly(1)
+		SilentAimService.DisableTemporarly(1)
 
 		CFrameService.LookAt(hrp,targetRoot.CFrame)
-        print("looked at root")
+		print("looked at root")
 
 		task.wait(0.2)
 
 		repeat task.wait() print("waiting for 7 distance") until CFrameService.GetDistance(hrp,targetRoot) >= 7
 
 		CFrameService.LookAt(hrp,targetRoot.CFrame)
-        print("looked at root")
+		print("looked at root")
 
 		hum.AutoRotate = true
 	end,
@@ -950,13 +966,6 @@ end
 
 local HadRagdoll = false
 
-getgenv().CFrameOffset = CFrame.new(0,5,0.1)
-getgenv().JumpDuration = 0.3
-getgenv().Y = 53
-
-getgenv().CFrameManipula = false
-getgenv().NoCollide = false
-
 local function Jump()
 	local _,Humanoid = GetMe()
 	Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
@@ -986,27 +995,23 @@ local function Initialize()
 				if IsShiftLocked() then return end
 				if IsDashOnCD() then return end
 
-                if Toggles["Auto Dripz"] then
-                    hum.WalkSpeed = 0
-				    hum.JumpPower = 0
-                    if getgenv().CFrameManipula then
-                        CFrameService.Tween(hrp,targetRoot.CFrame * getgenv().CFrameOffset,getgenv().JumpDuration,targetRoot)
-                    else
-                        local buh = CFrameService.IsBehind(hrp,targetRoot) and CFrame.new(0,0,4) or CFrame.new(0,0,-4)
-                        hrp.CFrame = targetRoot.CFrame * buh
-                        local look = hrp.CFrame.LookVector
-                        hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0,getgenv().Y,20)
-                    end
-                end
+				if Toggles["Auto Dripz"] then
+					hum.WalkSpeed = 0
+					hum.JumpPower = 0
+					local buh = CFrameService.IsBehind(hrp,targetRoot) and CFrame.new(0,0,4) or CFrame.new(0,0,-4)
+					hrp.CFrame = targetRoot.CFrame * buh
+					local look = hrp.CFrame.LookVector
+					hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0,53,20)
+				end
 
 				ConnectionService:NewConnection("UppercutHit",
 					track:GetMarkerReachedSignal("hitreg"), "Once", "Player", function()
 						if Toggles["Auto Dripz"] then
 							if IsShiftLocked() then return end
 							if IsDashOnCD() then return end
-                            AllTechs["Auto Dripz"](targetRoot,CFrameService.IsBehind(hrp,targetRoot) and "Back" or "Front")
-                            hum.WalkSpeed = 16
-				            hum.JumpPower = 45
+							AllTechs["Auto Dripz"](targetRoot,CFrameService.IsBehind(hrp,targetRoot) and "Back" or "Front")
+							hum.WalkSpeed = 16
+							hum.JumpPower = 45
 						end
 					end)
 
@@ -1054,8 +1059,8 @@ Plr.CharacterAdded:Connect(Initialize)
 
 Live.ChildAdded:Connect(function(guy)
 	guy:WaitForChild("HumanoidRootPart")
-    guy:WaitForChild("Humanoid")
-    task.wait(0.5)
+	guy:WaitForChild("Humanoid")
+	task.wait(0.5)
 	if guy.Name == SilentAimService.TargetName and SilentAimService.HadTarget then
 		SilentAimService.Target     = guy
 		SilentAimService.TargetName = nil
@@ -1063,7 +1068,7 @@ Live.ChildAdded:Connect(function(guy)
 
 		local h = HighlightService:Highlight("Stare")
 		if h then h.Parent = guy end
-        SilentAimService.Highlight = h
+		SilentAimService.Highlight = h
 
 		TargetInformation(true)
 
