@@ -1115,10 +1115,12 @@ LiveService.Handle = function(guy : Model)
 	ConnectionService:NewConnection("animPlayed",animator.AnimationPlayed,"Connect","Live",function(track)
 		local id = track.Animation.AnimationId
 		if SideIDS[id] or FrontIDS[id] then
-			CountDown(CooldownValues["Evasive"],1,function(elapsed)
-				guy:SetAttribute("Evasive",elapsed)
-			end,nil,guy.Name.."-Evasive")
-		end
+			if guy:GetAttribute("HadRagdoll") then
+				CountDown(CooldownValues["Evasive"],1,function(elapsed)
+					guy:SetAttribute("Evasive",elapsed)
+				end,nil,guy.Name.."-Evasive")
+			end
+ 		end
 	end,guy.Name)
 	
 	-- ded
