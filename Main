@@ -1136,14 +1136,14 @@ LiveService.Info = function(guy)
 
     local streakSignal = player:GetAttribute("CurrentStreak") ~= nil and player:GetAttributeChangedSignal("CurrentStreak") or guy:GetAttributeChangedSignal("CurrentStreak")
 
-	ConnectionService:NewConnection("Streak", streakSignal, "Connect", "Target", function()
+	ConnectionService:NewConnection("Streak", streakSignal, "Connect", "Live", function()
 		local s = player:GetAttribute("CurrentStreak") or guy:GetAttribute("CurrentStreak") or 0
 		if s < 0 then
 			buhbuhbuhhhh.Streak..Visible = false
 		else
 			ChangeText(buhbuhbuhhhh.Streak,     targetStreak)
 		end
-	end)
+	end,guy.Name)
 
 end
 
