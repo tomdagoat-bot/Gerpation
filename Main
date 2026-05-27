@@ -1130,6 +1130,10 @@ LiveService.Handle = function(guy : Model)
 	
 end
 
+for _, guy in Live:GetChildren() do
+	LiveService.Handle(guy)
+end
+
 Live.ChildAdded:Connect(function(guy)
 	guy:WaitForChild("HumanoidRootPart")
 	guy:WaitForChild("Humanoid")
