@@ -1124,12 +1124,23 @@ LiveService.Info = function(guy)
 	board.Parent = guy:FindFirstChild("Head")
 
     local image = MovesetIcon[GetMoveset(guy)]
-    
+
     if image then
         board.Moveset.Image = image
 	end
 
 	local buhbuhbuhhhh = board.Info
+
+    local s = player:GetAttribute("CurrentStreak") or guy:GetAttribute("CurrentStreak") or 0
+
+    if s < 0 then
+		buhbuhbuhhhh.Streak.Visible = false
+	else
+		ChangeText(buhbuhbuhhhh.Streak,     s)
+	end
+
+    ChangeText(buhbuhbuhhhh.Kills, player:GetAttribute("Kills"))
+    ChangeText(buhbuhbuhhhh["Total Kills"], player:GetAttribute("TotalKillsFrb"))
 
 	ConnectionService:NewConnection("Kills",player:GetAttributeChangedSignal("Kills"),"Connect","Live",function()
 		ChangeText(buhbuhbuhhhh.Kills, player:GetAttribute("Kills"))
@@ -1142,7 +1153,7 @@ LiveService.Info = function(guy)
 	local streakSignal = player:GetAttribute("CurrentStreak") ~= nil and player:GetAttributeChangedSignal("CurrentStreak") or guy:GetAttributeChangedSignal("CurrentStreak")
 
 	ConnectionService:NewConnection("Streak", streakSignal, "Connect", "Live", function()
-		local s = player:GetAttribute("CurrentStreak") or guy:GetAttribute("CurrentStreak") or 0
+		s = player:GetAttribute("CurrentStreak") or guy:GetAttribute("CurrentStreak") or 0
 		if s < 0 then
 			buhbuhbuhhhh.Streak.Visible = false
 		else
