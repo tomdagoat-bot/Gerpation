@@ -24,20 +24,21 @@ local MovesetIcon = {
 }
 
 local MovesetTranslation = { 
-	["Blade"] = "Guy That Cuts Atoms", 
+	["Blade"] = "Atomic Samurai", 
 	["CUSTOM"] = "CUSTOM", 
-	["Ninja"] = "Fast Guy", 
+	["Ninja"] = "Sonic", 
 	["KJ"] = "Kj", 
-	["Purple"] = "Purple Artist", 
-	["Esper"] = "Tatsumaki Mommy", 
-	["Sorcerer"] = "Blue Judas", 
-	["Zombie"] = "Is He Alive?", 
-	["Tech"] = "Smartass Kid", 
-	["Bald"] = "Baldi", 
-	["Hunter"] = "Blue Artist", 
-	["Batter"] = "Bat User", 
-	["Cyborg"] = "Cyborg Boyah", 
+	["Purple"] = "Suiryu", 
+	["Esper"] = "Tatsumaki", 
+	["Sorcerer"] = "Gojo", 
+	["Zombie"] = "Zombie Man", 
+	["Tech"] = "Child Empereor", 
+	["Bald"] = "Saitama", 
+	["Hunter"] = "Garou", 
+	["Batter"] = "Metal Bat", 
+	["Cyborg"] = "Genos", 
 }
+
 local TweenService     = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Debris           = game:GetService("Debris")
@@ -645,6 +646,12 @@ local function UpdateInfo(player : Player, target, hum)
 			UpdateUltimate(ultAlpha, ultAlpha * 100)
 		end)
 
+		ConnectionService:NewConnection("EvasiveUsed", target:GetAttributeChangedSignal("EvasiveCD"), "Connect", "Target", function()
+			if target:GetAttribute("EvasiveCD") then
+				UpdateEvasive(1, CooldownValues["Evasive"])
+			end
+		end)
+
 		UserLabel.Text = player.DisplayName .." ( ".. TranslateMoveset(GetMoveset(target)).. " ) "
 
 		ConnectionService:NewConnection("PlayerLeft",OnLeaving.Event,"Connect","Target",function()
@@ -1213,9 +1220,10 @@ LiveService.Handle = function(guy : Model)
 		if SideIDS[id] or FrontIDS[id] then
 			if guy:GetAttribute("HadRagdoll") then
 				print(guy,"Used Evasive")
+				guy:SetAttribute("EvasiveCD",true)
 				CountDown(CooldownValues["Evasive"],1,function(elapsed)
 					guy:SetAttribute("Evasive",elapsed)
-				end,nil,guy.Name.."-Evasive","Live",guy.Name)
+				end,function() guy:SetAttribute("EvasiveCD",false) end,guy.Name.."-Evasive","Live",guy.Name)
 			end
 		end
 	end,guy.Name)
