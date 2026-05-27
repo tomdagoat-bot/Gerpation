@@ -8,19 +8,19 @@ local function Warning(text, object)
 end
 
 local MovesetIcon = { 
-	["Blade"] = "http://www.roblox.com/asset/?id=15143528539", 
-	["CUSTOM"] = "http://www.roblox.com/asset/?id=12285568530", 
-	["Ninja"] = "http://www.roblox.com/asset/?id=15114672498", 
-	["KJ"] = "http://www.roblox.com/asset/?id=17140853847", 
-	["Purple"] = "http://www.roblox.com/asset/?id=18434673438", 
-	["Esper"] = "http://www.roblox.com/asset/?id=16136325038", 
-	["Sorcerer"] = "http://www.roblox.com/asset/?id=15143528348", 
-	["Zombie"] = "http://www.roblox.com/asset/?id=105242594360882", 
-	["Tech"] = "http://www.roblox.com/asset/?id=113596928331434", 
-	["Bald"] = "http://www.roblox.com/asset/?id=15114667107", 
-	["Hunter"] = "http://www.roblox.com/asset/?id=15124465439", 
-	["Batter"] = "http://www.roblox.com/asset/?id=15143529209", 
-	["Cyborg"] = "http://www.roblox.com/asset/?id=15143528856", 
+	["Blade"] = "rbxassetid://15143528539", 
+	["CUSTOM"] = "rbxassetid://12285568530", 
+	["Ninja"] = "rbxassetid://15114672498", 
+	["KJ"] = "rbxassetid://17140853847", 
+	["Purple"] = "rbxassetid://18434673438", 
+	["Esper"] = "rbxassetid://16136325038", 
+	["Sorcerer"] = "rbxassetid://15143528348", 
+	["Zombie"] = "rbxassetid://105242594360882", 
+	["Tech"] = "rbxassetid://113596928331434", 
+	["Bald"] = "rbxassetid://15114667107", 
+	["Hunter"] = "rbxassetid://15124465439", 
+	["Batter"] = "rbxassetid://15143529209", 
+	["Cyborg"] = "rbxassetid://15143528856", 
 }
 
 local TweenService     = game:GetService("TweenService")
@@ -1123,7 +1123,12 @@ LiveService.Info = function(guy)
 	local board = Templates.Board.Info:Clone()
 	board.Parent = guy:FindFirstChild("Head")
 
-	board.Moveset.Image = MovesetIcon[GetMoveset(guy)]
+    local image = MovesetIcon[GetMoveset(guy)]
+    
+    if image then
+        board.Moveset.Image = image
+	end
+
 	local buhbuhbuhhhh = board.Info
 
 	ConnectionService:NewConnection("Kills",player:GetAttributeChangedSignal("Kills"),"Connect","Live",function()
