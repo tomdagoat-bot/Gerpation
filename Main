@@ -79,6 +79,7 @@ local Templates = {
 		Tech         = VFXComponents["Tech Name"],
 		Stare        = VFXComponents.Stare,
 		["Auto Tech"] = VFXComponents["Auto Tech"],
+		Chant = VFXComponents.Chant,
 	},
 }
 
@@ -97,11 +98,15 @@ local function KeyCode(key)
 end
 
 local ConnectionService = {}
+
 ConnectionService.TargetConnections = {}
 ConnectionService.PlayerConnections = {}
+
 ConnectionService.Delays            		 = {}
 
-function ConnectionService:NewConnection(name, signal, connType, scope, callback)
+ConnectionService.LiveConnections 	 = {}
+
+function ConnectionService:NewConnection(name, signal, connType, scope, callback,extra)
 	if Warning(" ", name) == "STOP"
 		or Warning(" ", signal) == "STOP"
 		or Warning(" ", connType) == "STOP"
@@ -111,7 +116,8 @@ function ConnectionService:NewConnection(name, signal, connType, scope, callback
 
 	local container = scope == "Player"
 		and ConnectionService.PlayerConnections
-		or  ConnectionService.TargetConnections
+		or scope == "Target" and ConnectionService.TargetConnections
+		or ConnectionService.LiveConnections[extra]
 
 	if container[name] then
 		container[name]:Disconnect()
@@ -136,12 +142,13 @@ function ConnectionService:NewConnection(name, signal, connType, scope, callback
 	return conn
 end
 
-function ConnectionService.Disconnect(scope, name)
+function ConnectionService.Disconnect(scope, name,extra)
 	if Warning(" ", scope) == "STOP" then return end
 
 	local container = scope == "Player"
 		and ConnectionService.PlayerConnections
-		or  ConnectionService.TargetConnections
+		or scope == "Target" and ConnectionService.TargetConnections
+		or ConnectionService.LiveConnections[extra]
 
 	if name then
 		if container[name] then
@@ -499,7 +506,8 @@ end
 Players.PlayerRemoving:Connect(function(LeavingPlayer : Player)
 	if LeavingPlayer == Players:GetPlayerFromCharacter(SilentAimService.Target) then
 		OnLeaving:Fire()
-	end
+	end	
+	ConnectionService.Disconnect("Live",nil,LeavingPlayer.Name)
 end)
 
 local function UpdateInfo(player : Player, target, hum)
@@ -587,7 +595,7 @@ local function UpdateInfo(player : Player, target, hum)
 
 		UserLabel.Text = player.DisplayName
 		
-		ConnectionService:NewConnection("PlayerLeft",OnLeaving.Event,"Target",function()
+		ConnectionService:NewConnection("PlayerLeft",OnLeaving.Event,"Connect","Target",function()
 			EndIt()
 		end)
 	else
@@ -677,6 +685,24 @@ end
 
 local Debounce = false
 
+local function Chant()
+	local fx = Templates.VFX.Chant:Clone()
+	fx.Parent = workspace.Thrown
+	fx.CFrame = GetMe():FindFirstChild("Head").CFrame
+	
+	for _, v in fx.Attachment:GetChildren() do
+		if v:IsA("ParticleEmitter") then
+			v:Emit(v:GetAttribute("EmitCount"))
+		end
+	end
+	
+	local h = HighlightService:Highlight("Auto Tech", 0.4)
+	if h then h.Parent = GetMe() end
+	SoundService.PlaySound("Chant")
+	
+	Debris:AddItem(fx,1.5)
+end
+
 local function ToggleButton(name, onEnabled, onDisabled)
 	if Toggles[name] == nil then
 		Warning("Toggle '" .. name .. "' not pre-registered in Toggles table")
@@ -704,10 +730,8 @@ local function ToggleButton(name, onEnabled, onDisabled)
 		elseif not Toggles[name] and onDisabled then
 			onDisabled()
 		end
-
-		local h = HighlightService:Highlight("Auto Tech", 0.4)
-		if h then h.Parent = GetMe() end
-		SoundService.PlaySound("Chant")
+		
+		Chant()
 
 		task.wait(TweenInfos.TechClicked.Time)
 		TweenService:Create(btn, TweenInfos.TechClicked, {Size = baseSize}):Play()
@@ -971,7 +995,7 @@ local function Jump()
 	Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 end
 
-local function Initialize()
+local function Connect()
 	task.wait(1)
 	local char : Model, hum : Humanoid, hrp : Part = GetMe()
 	local animator = hum:FindFirstChildOfClass("Animator")
@@ -1054,13 +1078,59 @@ local function Initialize()
 
 end
 
-Initialize()
-Plr.CharacterAdded:Connect(Initialize)
+Connect()
+Plr.CharacterAdded:Connect(Connect)
+
+local LiveService = {}
+
+LiveService.Handle = function(guy : Model)
+	local hum : Humanoid = guy:WaitForChild("Humanoid")
+	local hrp : Part = guy:WaitForChild("HumanoidRootPart")
+	local animator : Animator = hum:FindFirstChildOfClass("Animator")
+	
+	ConnectionService.LiveConnections[guy.Name] = {}
+	
+	ConnectionService:NewConnection('ragdolled',guy.ChildAdded,"Connect","Live",function(child)
+		if child.Name == "Ragdoll" then
+			guy:SetAttribute("HadRagdoll",true)
+			ConnectionService.Cancel(guy.Name.."-Unragdoll")
+		end
+	end,guy.Name)
+	
+	ConnectionService:NewConnection('unragdolled',guy.ChildRemoved,"Connect","Live",function(child)
+		if child.Name == "Ragdoll" then
+			ConnectionService:Delay(guy.Name.."-Unragdoll",0.2,function()
+				guy:SetAttribute("HadRagdoll",false)
+			end)
+		end
+	end,guy.Name)
+	
+	ConnectionService:NewConnection("animPlayed",animator.AnimationPlayed,"Connect","Live",function(track)
+		local id = track.Animation.AnimationId
+		if SideIDS[id] or FrontIDS[id] then
+			CountDown(CooldownValues["Evasive"],1,function(elapsed)
+				guy:SetAttribute("Evasive",elapsed)
+			end,nil,guy.Name.."-Evasive")
+		end
+	end,guy.Name)
+	
+	-- ded
+	
+	ConnectionService:NewConnection("Died",hum.Died,"Once","Live",function()
+		ConnectionService.Disconnect("Live",nil,guy.Name)
+	end)	
+	
+	ConnectionService:NewConnection("Bye Daddy",guy.AncestryChanged,"Once","Live",function()
+		ConnectionService.Disconnect("Live",nil,guy.Name)
+	end)	
+	
+end
 
 Live.ChildAdded:Connect(function(guy)
 	guy:WaitForChild("HumanoidRootPart")
 	guy:WaitForChild("Humanoid")
 	task.wait(0.5)
+	LiveService.Handle(guy)
 	if guy.Name == SilentAimService.TargetName and SilentAimService.HadTarget then
 		SilentAimService.Target     = guy
 		SilentAimService.TargetName = nil
