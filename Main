@@ -1111,7 +1111,7 @@ Connect()
 Plr.CharacterAdded:Connect(Connect)
 
 local function GetMoveset(guy)
-    return guy:GetAttribute("Character") or "CUSTOM"
+    return guy:GetAttribute("Character") or Players:GetPlayerFromCharacter(guy):GetAttribute("Character") or "CUSTOM"
 end
 
 local LiveService = {}
