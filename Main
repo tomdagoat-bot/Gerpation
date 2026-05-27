@@ -23,6 +23,21 @@ local MovesetIcon = {
 	["Cyborg"] = "rbxassetid://15143528856", 
 }
 
+local MovesetTranslation = { 
+	["Blade"] = "Guy That Cuts Atoms", 
+	["CUSTOM"] = "CUSTOM", 
+	["Ninja"] = "Fast Guy", 
+	["KJ"] = "Kj", 
+	["Purple"] = "Purple Artist", 
+	["Esper"] = "Tatsumaki Mommy", 
+	["Sorcerer"] = "Blue Judas", 
+	["Zombie"] = "Is He Alive?", 
+	["Tech"] = "Smartass Kid", 
+	["Bald"] = "Baldi", 
+	["Hunter"] = "Blue Artist", 
+	["Batter"] = "Bat User", 
+	["Cyborg"] = "Cyborg Boyah", 
+}
 local TweenService     = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Debris           = game:GetService("Debris")
@@ -384,14 +399,14 @@ function HighlightService:Highlight(name, duration)
 	return h
 end
 
-local function CountDown(duration, rate, onTick, onEnd, name)
+local function CountDown(duration, rate, onTick, onEnd, name,container,extra)
 	if Warning(" ", duration) == "STOP" then return end
 
 	local t       = duration
 	local elapsed = 0
 	onTick(t)
 
-	ConnectionService:NewConnection(name, RunService.RenderStepped, "Connect", "Player", function(dt)
+	ConnectionService:NewConnection(name, RunService.RenderStepped, "Connect", container or "Player", function(dt)
 		elapsed += dt
 		if elapsed >= rate then
 			elapsed = 0
@@ -405,7 +420,7 @@ local function CountDown(duration, rate, onTick, onEnd, name)
 				onTick(t)
 			end
 		end
-	end)
+	end,extra)
 end
 
 local Kills      = TargetInfo:FindFirstChild("Kills")
@@ -434,6 +449,14 @@ end
 local function UpdateUltimate(alpha, value)
 	TweenService:Create(UltimateBar.Fill, TweenInfos.BarTween, {Size = UDim2.fromScale(alpha, 1)}):Play()
 	ChangeText(UltimateBar:FindFirstChild("Title"), math.floor(value) .. "%", "Ultimate")
+end
+
+local function GetMoveset(guy)
+	return Players:GetPlayerFromCharacter(guy):GetAttribute("Character") or guy:GetAttribute("Character") or "CUSTOM"
+end
+
+local function TranslateMoveset(char)
+	return MovesetTranslation[char] or "UNKNOWN"
 end
 
 local EvasiveTween 
@@ -621,13 +644,13 @@ local function UpdateInfo(player : Player, target, hum)
 			UpdateUltimate(ultAlpha, ultAlpha * 100)
 		end)
 
-		UserLabel.Text = player.DisplayName
+		UserLabel.Text = player.DisplayName .." ( ".. TranslateMoveset(GetMoveset(target)).. " ) "
 
 		ConnectionService:NewConnection("PlayerLeft",OnLeaving.Event,"Connect","Target",function()
 			EndIt()
 		end)
 	else
-		UserLabel.Text = target.Name
+		UserLabel.Text = target.Name .." ( ".. TranslateMoveset(GetMoveset(target)).. " ) "
 		UpdateUltimate(1, 100)
 		UpdateEvasive(0, 0)
 	end
@@ -1110,10 +1133,6 @@ end
 Connect()
 Plr.CharacterAdded:Connect(Connect)
 
-local function GetMoveset(guy)
-	return guy:GetAttribute("Character") or Players:GetPlayerFromCharacter(guy):GetAttribute("Character") or "CUSTOM"
-end
-
 local LiveService = {}
 
 LiveService.Info = function(guy)
@@ -1130,6 +1149,7 @@ LiveService.Info = function(guy)
 	end
 
 	local buhbuhbuhhhh = board.Info
+	buhbuhbuhhhh.Ping:Destroy()
 
     local s = player:GetAttribute("CurrentStreak") or guy:GetAttribute("CurrentStreak") or 0
 
@@ -1163,10 +1183,12 @@ LiveService.Info = function(guy)
 end
 
 LiveService.Handle = function(guy : Model)
-	if guy == GetMe() then return end
-	local hum : Humanoid = guy:WaitForChild("Humanoid")
-	local hrp : Part = guy:WaitForChild("HumanoidRootPart")
-	local animator : Animator = hum:FindFirstChildOfClass("Animator")
+	if guy == GetMe() then
+		return
+	end
+	local hum = guy:WaitForChild("Humanoid")
+	local hrp = guy:WaitForChild("HumanoidRootPart")
+	local animator = hum:FindFirstChildOfClass("Animator")
 
 	ConnectionService.LiveConnections[guy.Name] = {}
 
@@ -1192,7 +1214,7 @@ LiveService.Handle = function(guy : Model)
 				print(guy,"Used Evasive")
 				CountDown(CooldownValues["Evasive"],1,function(elapsed)
 					guy:SetAttribute("Evasive",elapsed)
-				end,nil,guy.Name.."-Evasive")
+				end,nil,guy.Name.."-Evasive","Live",guy.Name)
 			end
 		end
 	end,guy.Name)
@@ -1213,6 +1235,8 @@ LiveService.Handle = function(guy : Model)
 end
 
 for _, guy in Live:GetChildren() do
+	guy:WaitForChild("HumanoidRootPart")
+	guy:WaitForChild("Humanoid")
 	LiveService.Handle(guy)
 end
 
@@ -1220,7 +1244,6 @@ Live.ChildAdded:Connect(function(guy)
 	guy:WaitForChild("HumanoidRootPart")
 	guy:WaitForChild("Humanoid")
 	task.wait(0.5)
-	LiveService.Handle(guy)
 	if guy.Name == SilentAimService.TargetName and SilentAimService.HadTarget then
 		SilentAimService.Target     = guy
 		SilentAimService.TargetName = nil
@@ -1236,6 +1259,7 @@ Live.ChildAdded:Connect(function(guy)
 			EnableStare()
 		end
 	end
+	LiveService.Handle(guy)
 end)
 
 TogglesHolder.Position = UDim2.new(1.2, -10,0.5, 0)
