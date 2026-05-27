@@ -7,6 +7,21 @@ local function Warning(text, object)
 	end
 end
 
+local MovesetIcon = { 
+    ["Blade"] = "http://www.roblox.com/asset/?id=15143528539", 
+    ["CUSTOM"] = "http://www.roblox.com/asset/?id=12285568530", 
+    ["Ninja"] = "http://www.roblox.com/asset/?id=15114672498", 
+    ["KJ"] = "http://www.roblox.com/asset/?id=17140853847", 
+    ["Purple"] = "http://www.roblox.com/asset/?id=18434673438", 
+    ["Esper"] = "http://www.roblox.com/asset/?id=16136325038", 
+    ["Sorcerer"] = "http://www.roblox.com/asset/?id=15143528348", 
+    ["Zombie"] = "http://www.roblox.com/asset/?id=105242594360882", 
+    ["Tech"] = "http://www.roblox.com/asset/?id=113596928331434", 
+    ["Bald"] = "http://www.roblox.com/asset/?id=15114667107", 
+    ["Hunter"] = "http://www.roblox.com/asset/?id=15124465439", 
+    ["Batter"] = "http://www.roblox.com/asset/?id=15143529209", 
+    ["Cyborg"] = "http://www.roblox.com/asset/?id=15143528856", 
+ }
 
 local TweenService     = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -1095,7 +1110,42 @@ end
 Connect()
 Plr.CharacterAdded:Connect(Connect)
 
+local function GetMoveset(guy)
+    return guy:GetAttribute("Character") or "CUSTOM"
+end
+
 local LiveService = {}
+
+LiveService.Info = function(guy)
+    local guy, hum, hrp, player = GetInstances(guy)
+    if not player then return end
+
+    local board = Templates.Board.Info:Clone()
+    board.Parent = guy:FindFirstChild("Head")
+
+    board.Moveset.Image = MovesetIcon[GetMoveset(guy)]
+    local buhbuhbuhhhh = board.Info
+
+    ConnectionService:NewConnection("Kills",player:GetAttributeChangedSignal("Kills"),"Connect","Live",function()
+        ChangeText(buhbuhbuhhhh.Kills, player:GetAttribute("Kills"))
+    end,guy.Name)
+
+    ConnectionService:NewConnection("Total Kills",player:GetAttributeChangedSignal("TotalKillsFrb"),"Connect","Live",function()
+        ChangeText(buhbuhbuhhhh["Total Kills"], player:GetAttribute("TotalKillsFrb"))
+    end,guy.Name)
+
+    local streakSignal = player:GetAttribute("CurrentStreak") ~= nil and player:GetAttributeChangedSignal("CurrentStreak") or guy:GetAttributeChangedSignal("CurrentStreak")
+
+	ConnectionService:NewConnection("Streak", streakSignal, "Connect", "Target", function()
+		local s = player:GetAttribute("CurrentStreak") or guy:GetAttribute("CurrentStreak") or 0
+		if s < 0 then
+			buhbuhbuhhhh.Streak..Visible = false
+		else
+			ChangeText(buhbuhbuhhhh.Streak,     targetStreak)
+		end
+	end)
+
+end
 
 LiveService.Handle = function(guy : Model)
 	if guy == GetMe() then return end
@@ -1144,6 +1194,7 @@ LiveService.Handle = function(guy : Model)
 		ConnectionService.Disconnect("Live",nil,guy.Name)
 	end,guy.Name)	
 	
+    LiveService.Info(guy)
 end
 
 for _, guy in Live:GetChildren() do
