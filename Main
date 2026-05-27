@@ -20,7 +20,7 @@ local MovesetIcon = {
 	["Bald"] = "rbxassetid://15114667107", 
 	["Hunter"] = "rbxassetid://15124465439", 
 	["Batter"] = "rbxassetid://15143529209", 
-	["Cyborg"] = "rbxassetid://15143528856", 
+	["Cyborg"] = "rbxassetid://15143528856",
 }
 
 local MovesetTranslation = { 
@@ -37,6 +37,7 @@ local MovesetTranslation = {
 	["Hunter"] = "Garou", 
 	["Batter"] = "Metal Bat", 
 	["Cyborg"] = "Genos", 
+	["Monster"] = "Moster Garou"
 }
 
 local TweenService     = game:GetService("TweenService")
@@ -461,18 +462,13 @@ local function TranslateMoveset(char)
 	return MovesetTranslation[char] or "UNKNOWN"
 end
 
-local EvasiveTween 
-
 local function UpdateEvasive(alpha, left)
 
 	TweenService:Create(EvasiveBar.Fill, TweenInfos.BarTween, {Size = UDim2.fromScale(alpha, 1)}):Play()
 
-	if EvasiveTween then
-		EvasiveTween:Cancel()
-	end
+	task.wait(TweenInfos.BarTween)
 
-	EvasiveTween = TweenService:Create(EvasiveBar.Fill, TweenInfos.BarTween, {Size = UDim2.fromScale(0, 1)})
-	EvasiveTween:Play()
+	TweenService:Create(EvasiveBar.Fill, TweenInfos.BarTween, {Size = UDim2.fromScale(0, 1)}):Play()
 
 	if alpha > 0 then
 		CountDown(left, 1, function(t)
@@ -596,8 +592,7 @@ local function UpdateInfo(player : Player, target, hum)
 			or 0
 
 		local ultAlpha    = GetAlpha(player:GetAttribute("Ultimate"), 100)
-		local evasiveLeft = target:GetAttribute("Evasive") or 0
-		local evasiveAlpha = GetAlpha(evasiveLeft, CooldownValues["Evasive"])
+		local evasiveAlpha = GetAlpha(target:GetAttribute("Evasive") or 0, CooldownValues["Evasive"])
 
 		ChangeText(Kills,      targetKills)
 		if targetStreak < 0 then
@@ -607,7 +602,7 @@ local function UpdateInfo(player : Player, target, hum)
 		end
 		ChangeText(TotalKills, targetTotalKills)
 		UpdateUltimate(ultAlpha, ultAlpha * 100)
-		UpdateEvasive(evasiveAlpha, evasiveLeft)
+		UpdateEvasive(evasiveAlpha, CooldownValues["Evasive"])
 
 		if killsStat then
 			ConnectionService:NewConnection("Kills", killsStat:GetPropertyChangedSignal("Value"), "Connect", "Target", function()
@@ -648,9 +643,9 @@ local function UpdateInfo(player : Player, target, hum)
 		end)
 
 		ConnectionService:NewConnection("EvasiveUsed", target:GetAttributeChangedSignal("EvasiveCD"), "Connect", "Target", function()
-			evasiveAlpha = GetAlpha(target:GetAttribute("Evasive") or 0, CooldownValues["Evasive"])
 			if target:GetAttribute("EvasiveCD") then
-				UpdateEvasive(1, CooldownValues["Evasive"])
+				evasiveAlpha = GetAlpha(target:GetAttribute("Evasive") or 0, CooldownValues["Evasive"])
+				UpdateEvasive(evasiveAlpha, CooldownValues["Evasive"])
 			end
 		end)
 
