@@ -212,7 +212,6 @@ end
 function CFrameService.GetDistance(a, b)
 	if Warning(" ", a) == "STOP" or Warning(" ", b) == "STOP" then return end
 	local dis = (CFrameService.GetPosition(a) - CFrameService.GetPosition(b)).Magnitude
-	print(dis)
 	return math.round(dis)
 end
 
@@ -701,12 +700,10 @@ end
 local Debounce = false
 
 local function Chant()
-	local fx = Templates.VFX.Chant:Clone()
-	fx.Parent = workspace.Thrown
-	fx.CFrame = GetMe():FindFirstChild("Head").CFrame
-	print("fx")
-	
-	for _, v in fx.Attachment:GetChildren() do
+	local fx = Templates.VFX.Chant.Attachment:Clone()
+	fx.Parent = GetMe():FindFirstChild("Head")
+
+	for _, v in fx:GetChildren() do
 		if v:IsA("ParticleEmitter") then
 			v:Emit(10)
 		end
@@ -928,36 +925,29 @@ local AllTechs = {
 
 		local Offset = origin == "Front" and CFrame.new(0,0,12) or CFrame.new(0,0,-12)
 
-		print("looked at opposite direction")
 		CFrameService.LookAt(hrp,targetRoot.CFrame * Offset)
 
 		FrontDash()
 
 		local look = hrp.CFrame.LookVector
 		hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0,53,0)
-		print("float")
 
 		task.wait(0.15)
 
-		repeat task.wait() print("waiting for Z distance") until CFrameService.GetDistance(hrp,targetRoot) >= math.abs(Offset.Z)
+		repeat task.wait() until CFrameService.GetDistance(hrp,targetRoot) >= math.abs(Offset.Z)
 
 		SilentAimService.EnableTemporarly(0.5,targetRoot)
-		print("looking at root for 0.5s")
 
-		repeat task.wait() print("waiting for less than 4 distance") until CFrameService.GetDistance(hrp,targetRoot) <= 4
+		repeat task.wait() until CFrameService.GetDistance(hrp,targetRoot) <= 4
 		SilentAimService.DisableTemporarly(1)
 
-		task.wait(0.1)
+		CFrameService.LookAt(hrp,targetRoot.CFrame)
+
+		task.wait(0.2)
+
+		repeat task.wait() until CFrameService.GetDistance(hrp,targetRoot) >= 7
 
 		CFrameService.LookAt(hrp,targetRoot.CFrame)
-		print("looked at root")
-
-		task.wait(0.1)
-
-		repeat task.wait() print("waiting for 7 distance") until CFrameService.GetDistance(hrp,targetRoot) >= 7
-
-		CFrameService.LookAt(hrp,targetRoot.CFrame)
-		print("looked at root")
 
 		hum.AutoRotate = true
 	end,
