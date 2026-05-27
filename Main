@@ -452,7 +452,8 @@ local function UpdateUltimate(alpha, value)
 end
 
 local function GetMoveset(guy)
-	return Players:GetPlayerFromCharacter(guy):GetAttribute("Character") or guy:GetAttribute("Character") or "CUSTOM"
+	local player = Players:GetPlayerFromCharacter(guy)
+	return player ~= nil and player:GetAttribute("Character") or guy:GetAttribute("Character") or "CUSTOM"
 end
 
 local function TranslateMoveset(char)
