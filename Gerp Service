@@ -1284,104 +1284,14 @@ local item = {
 						};
 						[3] = {
 							id = 75;
-							type = "Frame";
-							children = {
-								[1] = {
-									id = 76;
-									type = "UIGradient";
-									children = {};
-									properties = {
-										Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(0.709804, 0.709804, 0.709804)), ColorSequenceKeypoint.new(1, Color3.new(0.6, 0.6, 0.6))});
-										Parent = {
-											[1] = 75;
-										};
-										Name = "Gradiant";
-										Rotation = 90;
-									};
-								};
-								[2] = {
-									id = 77;
-									type = "UIStroke";
-									children = {};
-									properties = {
-										Thickness = 0.03999999910593033;
-										LineJoinMode = Enum.LineJoinMode.Miter;
-										Name = "Stroke";
-										StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize;
-										Parent = {
-											[1] = 75;
-										};
-										Transparency = 0.30000001192092896;
-										Color = Color3.new(0.188235, 0.188235, 0.188235);
-									};
-								};
-								[3] = {
-									id = 78;
-									type = "Frame";
-									children = {};
-									properties = {
-										BorderColor3 = Color3.new(0, 0, 0);
-										AnchorPoint = Vector2.new(0.5, 1);
-										Parent = {
-											[1] = 75;
-										};
-										BackgroundTransparency = 0.5;
-										Position = UDim2.new(0.5, 0, 1, 0);
-										Size = UDim2.new(1, 0, 0, 0);
-										Name = "Fill";
-										BorderSizePixel = 0;
-										BackgroundColor3 = Color3.new(1, 0, 0);
-									};
-								};
-								[4] = {
-									id = 79;
-									type = "TextLabel";
-									children = {};
-									properties = {
-										FontFace = Font.new("rbxassetid://12187368843", Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-										Parent = {
-											[1] = 75;
-										};
-										TextStrokeTransparency = 0.5;
-										AnchorPoint = Vector2.new(0.5, 0.5);
-										ZIndex = 2;
-										BorderSizePixel = 0;
-										Size = UDim2.new(0.800000012, 0, 0.800000012, 0);
-										TextColor3 = Color3.new(1, 1, 1);
-										BorderColor3 = Color3.new(0, 0, 0);
-										Text = "Skill Name";
-										TextWrapped = true;
-										BackgroundTransparency = 1;
-										Position = UDim2.new(0.5, 0, 0.5, 0);
-										Name = "SkillName";
-										TextSize = 14;
-										TextScaled = true;
-										BackgroundColor3 = Color3.new(1, 1, 1);
-									};
-								};
-							};
-							properties = {
-								Parent = {
-									[1] = 63;
-								};
-								Name = "Skill";
-								Size = UDim2.new(0.25, 0, 1.25, 0);
-								BorderColor3 = Color3.new(0, 0, 0);
-								BackgroundTransparency = 0.30000001192092896;
-								BorderSizePixel = 0;
-								BackgroundColor3 = Color3.new(0.352941, 0.352941, 0.352941);
-							};
-						};
-						[4] = {
-							id = 80;
 							type = "TextButton";
 							children = {
 								[1] = {
-									id = 81;
+									id = 76;
 									type = "TextLabel";
 									children = {
 										[1] = {
-											id = 82;
+											id = 77;
 											type = "UIStroke";
 											children = {};
 											properties = {
@@ -1390,20 +1300,20 @@ local item = {
 												Name = "Stroke";
 												StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize;
 												Parent = {
-													[1] = 81;
+													[1] = 76;
 												};
 												Transparency = 0.5;
 												Color = Color3.new(0.211765, 0.352941, 0.827451);
 											};
 										};
 										[2] = {
-											id = 83;
+											id = 78;
 											type = "UIGradient";
 											children = {};
 											properties = {
 												Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)), ColorSequenceKeypoint.new(1, Color3.new(0.654902, 0.654902, 0.654902))});
 												Parent = {
-													[1] = 81;
+													[1] = 76;
 												};
 												Name = "Gradiant";
 												Rotation = 90;
@@ -1412,7 +1322,7 @@ local item = {
 									};
 									properties = {
 										Parent = {
-											[1] = 80;
+											[1] = 75;
 										};
 										FontFace = Font.new("rbxassetid://12187375716", Enum.FontWeight.Bold, Enum.FontStyle.Normal);
 										TextWrapped = true;
@@ -1452,16 +1362,16 @@ local item = {
 								BackgroundColor3 = Color3.new(1, 1, 1);
 							};
 						};
-						[5] = {
-							id = 84;
+						[4] = {
+							id = 79;
 							type = "TextButton";
 							children = {
 								[1] = {
-									id = 85;
+									id = 80;
 									type = "TextLabel";
 									children = {
 										[1] = {
-											id = 86;
+											id = 81;
 											type = "UIStroke";
 											children = {};
 											properties = {
@@ -1470,19 +1380,19 @@ local item = {
 												Name = "Stroke";
 												StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize;
 												Parent = {
-													[1] = 85;
+													[1] = 80;
 												};
 												Transparency = 0.5;
 											};
 										};
 										[2] = {
-											id = 87;
+											id = 82;
 											type = "UIGradient";
 											children = {};
 											properties = {
 												Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)), ColorSequenceKeypoint.new(1, Color3.new(0.654902, 0.654902, 0.654902))});
 												Parent = {
-													[1] = 85;
+													[1] = 80;
 												};
 												Name = "Gradiant";
 												Rotation = 90;
@@ -1491,7 +1401,7 @@ local item = {
 									};
 									properties = {
 										Parent = {
-											[1] = 84;
+											[1] = 79;
 										};
 										FontFace = Font.new("rbxassetid://12187368843", Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 										TextWrapped = true;
@@ -1511,30 +1421,30 @@ local item = {
 									};
 								};
 								[2] = {
-									id = 88;
+									id = 83;
 									type = "UIGradient";
 									children = {};
 									properties = {
 										Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)), ColorSequenceKeypoint.new(1, Color3.new(0.67451, 0.67451, 0.67451))});
 										Parent = {
-											[1] = 84;
+											[1] = 79;
 										};
 										Name = "Gradiant";
 										Rotation = 90;
 									};
 								};
 								[3] = {
-									id = 89;
+									id = 84;
 									type = "UIStroke";
 									children = {
 										[1] = {
-											id = 90;
+											id = 85;
 											type = "UIGradient";
 											children = {};
 											properties = {
 												Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(0.372549, 0.372549, 0.372549)), ColorSequenceKeypoint.new(1, Color3.new(0.67451, 0.67451, 0.67451))});
 												Parent = {
-													[1] = 89;
+													[1] = 84;
 												};
 												Name = "Gradiant";
 												Rotation = 90;
@@ -1547,7 +1457,7 @@ local item = {
 										Name = "Stroke";
 										Color = Color3.new(0.407843, 0.407843, 0.407843);
 										Parent = {
-											[1] = 84;
+											[1] = 79;
 										};
 										Thickness = 0.07999999821186066;
 										StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize;
@@ -1572,6 +1482,96 @@ local item = {
 								BackgroundColor3 = Color3.new(0.211765, 0.211765, 0.211765);
 							};
 						};
+						[5] = {
+							id = 86;
+							type = "Frame";
+							children = {
+								[1] = {
+									id = 87;
+									type = "UIGradient";
+									children = {};
+									properties = {
+										Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(0.709804, 0.709804, 0.709804)), ColorSequenceKeypoint.new(1, Color3.new(0.6, 0.6, 0.6))});
+										Parent = {
+											[1] = 86;
+										};
+										Name = "Gradiant";
+										Rotation = 90;
+									};
+								};
+								[2] = {
+									id = 88;
+									type = "UIStroke";
+									children = {};
+									properties = {
+										Thickness = 0.03999999910593033;
+										LineJoinMode = Enum.LineJoinMode.Miter;
+										Name = "Stroke";
+										StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize;
+										Parent = {
+											[1] = 86;
+										};
+										Transparency = 0.30000001192092896;
+										Color = Color3.new(0.188235, 0.188235, 0.188235);
+									};
+								};
+								[3] = {
+									id = 89;
+									type = "Frame";
+									children = {};
+									properties = {
+										BorderColor3 = Color3.new(0, 0, 0);
+										AnchorPoint = Vector2.new(0.5, 1);
+										Parent = {
+											[1] = 86;
+										};
+										BackgroundTransparency = 0.5;
+										Position = UDim2.new(0.5, 0, 1, 0);
+										Size = UDim2.new(1, 0, 0, 0);
+										Name = "Fill";
+										BorderSizePixel = 0;
+										BackgroundColor3 = Color3.new(1, 0, 0);
+									};
+								};
+								[4] = {
+									id = 90;
+									type = "TextLabel";
+									children = {};
+									properties = {
+										FontFace = Font.new("rbxassetid://12187368843", Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+										Parent = {
+											[1] = 86;
+										};
+										TextStrokeTransparency = 0.5;
+										AnchorPoint = Vector2.new(0.5, 0.5);
+										ZIndex = 2;
+										BorderSizePixel = 0;
+										Size = UDim2.new(0.800000012, 0, 0.800000012, 0);
+										TextColor3 = Color3.new(1, 1, 1);
+										BorderColor3 = Color3.new(0, 0, 0);
+										Text = "Skill Name";
+										TextWrapped = true;
+										BackgroundTransparency = 1;
+										Position = UDim2.new(0.5, 0, 0.5, 0);
+										Name = "SkillName";
+										TextSize = 14;
+										TextScaled = true;
+										BackgroundColor3 = Color3.new(1, 1, 1);
+									};
+								};
+							};
+							properties = {
+								Parent = {
+									[1] = 63;
+								};
+								Name = "Skill";
+								Size = UDim2.new(0.25, 0, 1.25, 0);
+								BorderColor3 = Color3.new(0, 0, 0);
+								BackgroundTransparency = 0.30000001192092896;
+								BorderSizePixel = 0;
+								BackgroundColor3 = Color3.new(0.352941, 0.352941, 0.352941);
+							};
+						};
 					};
 					properties = {
 						Name = "Screen Gui";
@@ -1594,65 +1594,6 @@ local item = {
 			children = {
 				[1] = {
 					id = 92;
-					type = "BillboardGui";
-					children = {
-						[1] = {
-							id = 93;
-							type = "TextLabel";
-							children = {
-								[1] = {
-									id = 94;
-									type = "UIGradient";
-									children = {};
-									properties = {
-										Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)), ColorSequenceKeypoint.new(1, Color3.new(0.407843, 0.407843, 0.407843))});
-										Parent = {
-											[1] = 93;
-										};
-										Name = "Gradiant";
-										Rotation = 90;
-									};
-								};
-							};
-							properties = {
-								FontFace = Font.new("rbxassetid://12187375716", Enum.FontWeight.Bold, Enum.FontStyle.Normal);
-								TextStrokeColor3 = Color3.new(0.4, 0.380392, 1);
-								TextStrokeTransparency = 0.5;
-								AnchorPoint = Vector2.new(0.5, 0.5);
-								BorderSizePixel = 0;
-								Size = UDim2.new(1, 0, 1, 0);
-								TextColor3 = Color3.new(0.466667, 1, 0.980392);
-								BorderColor3 = Color3.new(0, 0, 0);
-								Text = "TECH NAME";
-								Parent = {
-									[1] = 92;
-								};
-								TextWrapped = true;
-								Name = "Tech";
-								Position = UDim2.new(0.5, 0, 0.5, 0);
-								TextSize = 14;
-								BackgroundTransparency = 1;
-								TextScaled = true;
-								BackgroundColor3 = Color3.new(1, 1, 1);
-							};
-						};
-					};
-					properties = {
-						ClipsDescendants = true;
-						ResetOnSpawn = false;
-						Parent = {
-							[1] = 91;
-						};
-						Name = "Tech Name";
-						ZIndexBehavior = Enum.ZIndexBehavior.Sibling;
-						StudsOffsetWorldSpace = Vector3.new(0, 1.5, 0);
-						Active = true;
-						AlwaysOnTop = true;
-						Size = UDim2.new(4, 0, 0.800000012, 0);
-					};
-				};
-				[2] = {
-					id = 95;
 					type = "Highlight";
 					children = {};
 					properties = {
@@ -1667,8 +1608,8 @@ local item = {
 						Enabled = false;
 					};
 				};
-				[3] = {
-					id = 96;
+				[2] = {
+					id = 93;
 					type = "Highlight";
 					children = {};
 					properties = {
@@ -1682,8 +1623,8 @@ local item = {
 						OutlineTransparency = 0.30000001192092896;
 					};
 				};
-				[4] = {
-					id = 97;
+				[3] = {
+					id = 94;
 					type = "Highlight";
 					children = {};
 					properties = {
@@ -1698,18 +1639,166 @@ local item = {
 						Enabled = false;
 					};
 				};
-				[5] = {
-					id = 98;
+				[4] = {
+					id = 95;
 					type = "Highlight";
 					children = {};
 					properties = {
+						FillColor = Color3.new(0.498039, 0.403922, 0.796079);
 						Name = "Auto Tech";
-						OutlineColor = Color3.new(0.552941, 0.101961, 0.101961);
+						OutlineColor = Color3.new(0.407843, 0.313726, 0.780392);
 						Parent = {
 							[1] = 91;
 						};
-						FillTransparency = 0.10000000149011612;
-						OutlineTransparency = 0.20000000298023224;
+						FillTransparency = 0.20000000298023224;
+						Enabled = false;
+					};
+				};
+				[5] = {
+					id = 96;
+					type = "BillboardGui";
+					children = {
+						[1] = {
+							id = 97;
+							type = "TextLabel";
+							children = {
+								[1] = {
+									id = 98;
+									type = "UIGradient";
+									children = {};
+									properties = {
+										Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(0.443137, 0.34902, 0.54902)), ColorSequenceKeypoint.new(0.25, Color3.new(0.560784, 0.439216, 0.694118)), ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)), ColorSequenceKeypoint.new(0.75, Color3.new(0.560784, 0.439216, 0.694118)), ColorSequenceKeypoint.new(1, Color3.new(0.443137, 0.34902, 0.54902))});
+										Parent = {
+											[1] = 97;
+										};
+										Name = "Gradiant";
+										Rotation = 90;
+									};
+								};
+							};
+							properties = {
+								FontFace = Font.new("rbxassetid://12187360881", Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+								TextStrokeColor3 = Color3.new(0.368627, 0.372549, 0.619608);
+								TextStrokeTransparency = 0;
+								AnchorPoint = Vector2.new(0.5, 0.5);
+								BorderSizePixel = 0;
+								Size = UDim2.new(1, 0, 1, 0);
+								TextColor3 = Color3.new(0.631373, 0.419608, 1);
+								BorderColor3 = Color3.new(0, 0, 0);
+								Text = "TECH NAME";
+								Parent = {
+									[1] = 96;
+								};
+								TextWrapped = true;
+								BackgroundTransparency = 1;
+								Name = "Tech";
+								Position = UDim2.new(0.5, 0, 0.5, 0);
+								ClipsDescendants = true;
+								TextSize = 14;
+								TextScaled = true;
+								BackgroundColor3 = Color3.new(1, 1, 1);
+							};
+						};
+					};
+					properties = {
+						ClipsDescendants = true;
+						ResetOnSpawn = false;
+						Parent = {
+							[1] = 91;
+						};
+						Name = "Tech Name";
+						ZIndexBehavior = Enum.ZIndexBehavior.Sibling;
+						StudsOffsetWorldSpace = Vector3.new(0, 2, 0);
+						Active = true;
+						AlwaysOnTop = true;
+						Size = UDim2.new(5, 0, 1.5, 0);
+					};
+				};
+				[6] = {
+					id = 99;
+					type = "Part";
+					children = {
+						[1] = {
+							id = 100;
+							type = "Attachment";
+							children = {
+								[1] = {
+									id = 101;
+									type = "ParticleEmitter";
+									children = {};
+									properties = {
+										Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(0.537255, 0.494118, 1)), ColorSequenceKeypoint.new(1, Color3.new(0.294118, 0.27451, 0.533333))});
+										Drag = 3;
+										Lifetime = NumberRange.new(0.6, 0.6);
+										Speed = NumberRange.new(30, 50);
+										Brightness = 5;
+										Size = NumberSequence.new(0, 1, 0, 0.03125, 1.09085, 0, 0.0625, 1.17603, 0, 0.09375, 1.25571, 0, 0.125, 1.33008, 0, 0.15625, 1.39932, 0, 0.1875, 1.46362, 0, 0.21875, 1.52316, 0, 0.25, 1.57812, 0, 0.3125, 1.67505, 0, 0.375, 1.75586, 0, 0.4375, 1.82202, 0, 0.5, 1.875, 0, 0.5625, 1.91626, 0, 0.625, 1.94727, 0, 0.6875, 1.96948, 0, 0.75, 1.98438, 0, 0.8125, 1.99341, 0, 1, 0, 0);
+										FlipbookMode = Enum.ParticleFlipbookMode.OneShot;
+										RotSpeed = NumberRange.new(-180, 180);
+										Rate = 0;
+										Parent = {
+											[1] = 100;
+										};
+										Rotation = NumberRange.new(-360, 360);
+										Transparency = NumberSequence.new(0, 0, 0, 0.125, 0.00195312, 0, 0.1875, 0.0065918, 0, 0.25, 0.015625, 0, 0.3125, 0.0305176, 0, 0.375, 0.0527344, 0, 0.4375, 0.0837402, 0, 0.5, 0.125, 0, 0.5625, 0.177979, 0, 0.625, 0.244141, 0, 0.6875, 0.324951, 0, 0.75, 0.421875, 0, 0.78125, 0.476837, 0, 0.8125, 0.536377, 0, 0.84375, 0.600677, 0, 0.875, 0.669922, 0, 0.90625, 0.744293, 0, 0.9375, 0.823975, 0, 0.96875, 0.909149, 0, 1, 1, 0);
+										Name = "10";
+										VelocityInheritance = 0.10000000149011612;
+										SpreadAngle = Vector2.new(180, 180);
+										Acceleration = Vector3.new(0, -20, 0);
+										Texture = "rbxassetid://12386386944";
+										Squash = NumberSequence.new(0, 0, 0, 0.5, -0.5, 0.2, 1, 0, 0);
+									};
+								};
+								[2] = {
+									id = 102;
+									type = "ParticleEmitter";
+									children = {};
+									properties = {
+										Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(0, 0, 0)), ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))});
+										Drag = 3;
+										Lifetime = NumberRange.new(0.6, 0.6);
+										Speed = NumberRange.new(30, 50);
+										Brightness = 5;
+										Size = NumberSequence.new(0, 1, 0, 0.03125, 1.09085, 0, 0.0625, 1.17603, 0, 0.09375, 1.25571, 0, 0.125, 1.33008, 0, 0.15625, 1.39932, 0, 0.1875, 1.46362, 0, 0.21875, 1.52316, 0, 0.25, 1.57812, 0, 0.3125, 1.67505, 0, 0.375, 1.75586, 0, 0.4375, 1.82202, 0, 0.5, 1.875, 0, 0.5625, 1.91626, 0, 0.625, 1.94727, 0, 0.6875, 1.96948, 0, 0.75, 1.98438, 0, 0.8125, 1.99341, 0, 1, 0, 0);
+										Acceleration = Vector3.new(0, -20, 0);
+										RotSpeed = NumberRange.new(-180, 180);
+										Parent = {
+											[1] = 100;
+										};
+										Rate = 0;
+										VelocityInheritance = 0.10000000149011612;
+										Rotation = NumberRange.new(-360, 360);
+										Transparency = NumberSequence.new(0, 0, 0, 0.125, 0.00195312, 0, 0.1875, 0.0065918, 0, 0.25, 0.015625, 0, 0.3125, 0.0305176, 0, 0.375, 0.0527344, 0, 0.4375, 0.0837402, 0, 0.5, 0.125, 0, 0.5625, 0.177979, 0, 0.625, 0.244141, 0, 0.6875, 0.324951, 0, 0.75, 0.421875, 0, 0.78125, 0.476837, 0, 0.8125, 0.536377, 0, 0.84375, 0.600677, 0, 0.875, 0.669922, 0, 0.90625, 0.744293, 0, 0.9375, 0.823975, 0, 0.96875, 0.909149, 0, 1, 1, 0);
+										Name = "10";
+										Texture = "rbxassetid://12386386944";
+										LightEmission = 0.30000001192092896;
+										FlipbookMode = Enum.ParticleFlipbookMode.OneShot;
+										Squash = NumberSequence.new(0, 0, 0, 0.5, -0.5, 0.2, 1, 0, 0);
+										SpreadAngle = Vector2.new(180, 180);
+									};
+								};
+							};
+							properties = {
+								Parent = {
+									[1] = 99;
+								};
+								WorldCFrame = CFrame.new(-81.5, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1);
+							};
+						};
+					};
+					properties = {
+						CanQuery = false;
+						CanCollide = false;
+						Parent = {
+							[1] = 91;
+						};
+						Anchored = true;
+						CanTouch = false;
+						Transparency = 1;
+						Name = "Chant";
+						CFrame = CFrame.new(-81.5, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1);
+						Massless = true;
+						Size = Vector3.new(1, 1, 1);
 					};
 				};
 			};
@@ -1721,41 +1810,29 @@ local item = {
 			};
 		};
 		[3] = {
-			id = 99;
+			id = 103;
 			type = "Folder";
 			children = {
 				[1] = {
-					id = 100;
-					type = "Sound";
-					children = {};
-					properties = {
-						SoundId = "rbxassetid://139076320217056";
-						Name = "Click";
-						Parent = {
-							[1] = 99;
-						};
-					};
-				};
-				[2] = {
-					id = 101;
+					id = 104;
 					type = "Sound";
 					children = {};
 					properties = {
 						SoundId = "rbxassetid://139246456147301";
 						Name = "Mobile";
 						Parent = {
-							[1] = 99;
+							[1] = 103;
 						};
 					};
 				};
-				[3] = {
-					id = 102;
+				[2] = {
+					id = 105;
 					type = "Sound";
 					children = {};
 					properties = {
 						SoundId = "rbxassetid://92024965791579";
 						Parent = {
-							[1] = 99;
+							[1] = 103;
 						};
 						Name = "Chant";
 						Volume = 0.20000000298023224;
@@ -1769,6 +1846,17 @@ local item = {
 				};
 			};
 		};
+		[4] = {
+			id = 106;
+			type = "BindableEvent";
+			children = {};
+			properties = {
+				Name = "OnLeaving";
+				Parent = {
+					[1] = 0;
+				};
+			};
+		};
 	};
 	properties = {
 		Name = "Gerp Hub";
@@ -1777,28 +1865,28 @@ local item = {
 }
 scan = function(objectData)
 	local object = Instance.new(objectData.type)
-
+	
 	objects[objectData.id] = object
-
+	
 	for property, value in pairs(objectData.properties) do
 		if type(value) == "table" then
 			awaitRef[object] = {
 				["v"] = value[1],
 				["k"] = property
 			}
-
+			
 			continue
 		end
-
+		
 		if property == "Source" then
 			table.insert(coroutines, coroutine.create(value))
-
+			
 			continue
 		end
-
+		
 		object[property] = value
 	end
-
+	
 	for _, child in pairs(objectData.children) do
 		scan(child)
 	end
@@ -1812,11 +1900,4 @@ end
 
 for _, cCoroutine in pairs(coroutines) do
 	coroutine.resume(cCoroutine)
-end
-
-
-for _, textbutton in game.ReplicatedStorage["Gerp Hub"].Gui["Screen Gui"]:GetChildren() do
-	if textbutton:IsA("TextButton") then
-		textbutton.Text = " "
-	end
 end
