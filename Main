@@ -1,28 +1,3 @@
-if not game:IsLoaded() then
-    game.Loaded:Wait()
-end
-
---[[
-    GetGenv
-]]--
-
-local FAKEGETGENV
-
-if not getgenv then
-	FAKEGETGENV = {}
-	function getgenv() return FAKEGETGENV end
-end
-
-if getgenv().GerpLoaded then
-	warn("[Gerp Hub]: Script Is Already Loaded!")
-	return
-end
-
-getgenv().GerpLoaded = true
-
-loadstring(game:HttpGet("https://raw.githubusercontent.com/tomdagoat-bot/Gerpation/refs/heads/main/Gerp%20Service"))()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/tomdagoat-bot/Gerpation/refs/heads/main/Gui"))()
-
 local function Warning(text, object)
 	if object == nil and text == " " then
 		warn("[GERP HUB]: A provided argument doesn't exist! Stopping execution.")
