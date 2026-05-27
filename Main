@@ -1166,7 +1166,7 @@ UI.Enabled = true
 
 TweenService:Create(TogglesHolder,TweenInfos.UI,{Position = UDim2.new(1,0,0.5,0)}):Play()
 TweenService:Create(CooldownsHolder,TweenInfos.UI,{Position = UDim2.new(0.5,0,0.1,0)}):Play()
-TweenService:Create(UI.Credit,TweenInfos.UI,{TextTrasparency = 0.5}):Play()
+TweenService:Create(UI.Credit,TweenInfos.UI,{TextTransparency = 0.5}):Play()
 
 UI.Credit.AncestryChanged:Once(function()
 	Plr:Kick("Dont Do That, Next Time It'll Be A Ban")
