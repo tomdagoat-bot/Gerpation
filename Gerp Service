@@ -1066,13 +1066,13 @@ local item = {
 								Parent = {
 									[1] = 2;
 								};
-								StudsOffsetWorldSpace = Vector3.new(0, 2.5, 0);
+								StudsOffsetWorldSpace = Vector3.new(0, 4, 0);
 								Name = "Info";
 								ZIndexBehavior = Enum.ZIndexBehavior.Sibling;
 								ResetOnSpawn = false;
 								Active = true;
 								ClipsDescendants = true;
-								Size = UDim2.new(3, 0, 4.5, 0);
+								Size = UDim2.new(5, 0, 8, 0);
 							};
 						};
 					};
