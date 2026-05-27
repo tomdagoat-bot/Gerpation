@@ -466,7 +466,7 @@ local function UpdateEvasive(alpha, left)
 
 	TweenService:Create(EvasiveBar.Fill, TweenInfos.BarTween, {Size = UDim2.fromScale(alpha, 1)}):Play()
 
-	task.wait(TweenInfos.BarTween)
+	task.wait(TweenInfos.BarTween.Time)
 
 	TweenService:Create(EvasiveBar.Fill, TweenInfos.BarTween, {Size = UDim2.fromScale(0, 1)}):Play()
 
