@@ -1122,9 +1122,11 @@ LiveService.Handle = function(guy : Model)
 	
 	-- ded
 	
-	ConnectionService:NewConnection("Died",hum.Died,"Once","Live",function()
-		ConnectionService.Disconnect("Live",nil,guy.Name)
-	end)	
+	if hum then
+		ConnectionService:NewConnection("Died",hum.Died,"Once","Live",function()
+			ConnectionService.Disconnect("Live",nil,guy.Name)
+		end)	
+	end
 	
 	ConnectionService:NewConnection("Bye Daddy",guy.AncestryChanged,"Once","Live",function()
 		ConnectionService.Disconnect("Live",nil,guy.Name)
