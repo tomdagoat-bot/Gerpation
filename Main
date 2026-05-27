@@ -479,8 +479,9 @@ local function UpdateEvasive(alpha, left)
 			ChangeText(EvasiveBar:FindFirstChild("Title"), t .. "s", "Evasive")
 		end, function()
 			EvasiveBar:FindFirstChild("Title").Text = "Evasive"
-		end, "EvasiveBar")
+		end, "EvasiveBar", "Target")
 	else
+		ConnectionService.Disconnect("Target","EvasiveBar")
 		EvasiveBar:FindFirstChild("Title").Text = "Evasive"
 	end
 end
@@ -647,6 +648,7 @@ local function UpdateInfo(player : Player, target, hum)
 		end)
 
 		ConnectionService:NewConnection("EvasiveUsed", target:GetAttributeChangedSignal("EvasiveCD"), "Connect", "Target", function()
+			evasiveAlpha = GetAlpha(target:GetAttribute("Evasive") or 0, CooldownValues["Evasive"])
 			if target:GetAttribute("EvasiveCD") then
 				UpdateEvasive(1, CooldownValues["Evasive"])
 			end
