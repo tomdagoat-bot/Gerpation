@@ -1090,6 +1090,7 @@ Plr.CharacterAdded:Connect(Connect)
 local LiveService = {}
 
 LiveService.Handle = function(guy : Model)
+	if guy == GetMe() then return end
 	local hum : Humanoid = guy:WaitForChild("Humanoid")
 	local hrp : Part = guy:WaitForChild("HumanoidRootPart")
 	local animator : Animator = hum:FindFirstChildOfClass("Animator")
