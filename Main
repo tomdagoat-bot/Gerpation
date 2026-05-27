@@ -700,12 +700,17 @@ end
 local Debounce = false
 
 local function Chant()
-	local fx = Templates.VFX.Chant.Attachment:Clone()
-	fx.Parent = GetMe():FindFirstChild("Head")
+	local fx = Templates.VFX.Chant:Clone()
 
-	for _, v in fx:GetChildren() do
+	local head = GetMe():FindFirstChild("Head")
+
+	fx.Parent = head
+	fx.CFrame = head.CFrame
+
+	for _, v in fx.Attachment:GetChildren() do
+		v.Parent = fx
 		if v:IsA("ParticleEmitter") then
-			v:Emit(10)
+			v:Emit(15)
 		end
 	end
 	
