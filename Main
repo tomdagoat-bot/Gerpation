@@ -463,21 +463,20 @@ local function TranslateMoveset(char)
 end
 
 local function UpdateEvasive(alpha, left)
-
 	TweenService:Create(EvasiveBar.Fill, TweenInfos.BarTween, {Size = UDim2.fromScale(alpha, 1)}):Play()
-
-	task.wait(TweenInfos.BarTween.Time)
-
-	TweenService:Create(EvasiveBar.Fill, TweenInfos.BarTween, {Size = UDim2.fromScale(0, 1)}):Play()
 
 	if alpha > 0 then
 		CountDown(left, 1, function(t)
+			local a = GetAlpha(t, CooldownValues["Evasive"])
+			TweenService:Create(EvasiveBar.Fill, TweenInfos.BarTween, {Size = UDim2.fromScale(a, 1)}):Play()
 			ChangeText(EvasiveBar:FindFirstChild("Title"), t .. "s", "Evasive")
 		end, function()
+			TweenService:Create(EvasiveBar.Fill, TweenInfos.BarTween, {Size = UDim2.fromScale(0, 1)}):Play()
 			EvasiveBar:FindFirstChild("Title").Text = "Evasive"
 		end, "EvasiveBar", "Target")
 	else
-		ConnectionService.Disconnect("Target","EvasiveBar")
+		ConnectionService.Disconnect("Target", "EvasiveBar")
+		TweenService:Create(EvasiveBar.Fill, TweenInfos.BarTween, {Size = UDim2.fromScale(0, 1)}):Play()
 		EvasiveBar:FindFirstChild("Title").Text = "Evasive"
 	end
 end
@@ -602,7 +601,7 @@ local function UpdateInfo(player : Player, target, hum)
 		end
 		ChangeText(TotalKills, targetTotalKills)
 		UpdateUltimate(ultAlpha, ultAlpha * 100)
-		UpdateEvasive(evasiveAlpha, target:GetAttribute("Evasive"))
+		UpdateEvasive(evasiveAlpha, CooldownValues["Evasive"])
 
 		if killsStat then
 			ConnectionService:NewConnection("Kills", killsStat:GetPropertyChangedSignal("Value"), "Connect", "Target", function()
@@ -644,9 +643,16 @@ local function UpdateInfo(player : Player, target, hum)
 
 		ConnectionService:NewConnection("EvasiveUsed", target:GetAttributeChangedSignal("EvasiveCD"), "Connect", "Target", function()
 			if target:GetAttribute("EvasiveCD") then
-				evasiveAlpha = GetAlpha(target:GetAttribute("Evasive") or 0, CooldownValues["Evasive"])
-				UpdateEvasive(evasiveAlpha, target:GetAttribute("Evasive"))
+				local currentEvasive = target:GetAttribute("Evasive") or CooldownValues["Evasive"]
+				local freshAlpha = GetAlpha(currentEvasive, CooldownValues["Evasive"])
+				UpdateEvasive(freshAlpha, currentEvasive)
+			else
+				UpdateEvasive(0, 0)
 			end
+		end)
+
+		ConnectionService:NewConnection("Moveset", player:GetAttributeChangedSignal("Character"), "Connect", "Target", function()
+			UserLabel.Text = player.DisplayName .." ( ".. TranslateMoveset(GetMoveset(target)).. " ) "
 		end)
 
 		UserLabel.Text = player.DisplayName .." ( ".. TranslateMoveset(GetMoveset(target)).. " ) "
@@ -655,7 +661,7 @@ local function UpdateInfo(player : Player, target, hum)
 			EndIt()
 		end)
 	else
-		UserLabel.Text = target.Name .." ( ".. TranslateMoveset(GetMoveset(target)).. " ) "
+		UserLabel.Text = target.Name
 		UpdateUltimate(1, 100)
 		UpdateEvasive(0, 0)
 	end
@@ -906,7 +912,7 @@ local function TechFx(name)
 	if label then label.Text = name:upper() end
 
 	TweenService:Create(gui, TweenInfos.TechFx, {Size = Templates.VFX.Tech.Size}):Play()
-	task.delay(TweenInfos.TechFx.Time + 1, function()
+	task.delay(TweenInfos.TechFx.Time + 1.5, function()
 		TweenService:Create(gui, TweenInfos.TechFxOut, {Size = UDim2.fromScale(0, 0)}):Play()
 		task.delay(TweenInfos.TechFxOut.Time, function()
 			gui:Destroy()
@@ -1158,9 +1164,6 @@ LiveService.Info = function(guy)
 	local buhbuhbuhhhh = board.Info
 	buhbuhbuhhhh.Ping:Destroy()
 
-	local CDS = Templates.Board.Cooldowns:Clone()
-	CDS.Parent = hrp
-
     local s = player:GetAttribute("CurrentStreak") or guy:GetAttribute("CurrentStreak") or 0
 
     if s < 0 then
@@ -1220,14 +1223,16 @@ LiveService.Handle = function(guy : Model)
 	ConnectionService:NewConnection("animPlayed",animator.AnimationPlayed,"Connect","Live",function(track)
 		local id = track.Animation.AnimationId
 		if SideIDS[id] or FrontIDS[id] then
-			local name = SideIDS[id] and "Side Dash" or "Front Dash"
-			CDTrigger(hrp.Cooldowns[name],guy.Name)
 			if guy:GetAttribute("HadRagdoll") then
-				CDTrigger(hrp.Cooldowns.Evasive,guy.Name)
 				guy:SetAttribute("EvasiveCD",true)
-				CountDown(CooldownValues["Evasive"],1,function(elapsed)
-					guy:SetAttribute("Evasive",elapsed)
-				end,function() guy:SetAttribute("EvasiveCD",false) end,guy.Name.."-Evasive","Live",guy.Name)
+
+				guy:SetAttribute("Evasive", CooldownValues["Evasive"])
+				CountDown(CooldownValues["Evasive"], 1, function(t)
+    				guy:SetAttribute("Evasive", t)
+				end, function()
+    				guy:SetAttribute("Evasive", 0)
+    				guy:SetAttribute("EvasiveCD", false)
+				end, guy.Name.."-Evasive", "Live", guy.Name)
 			end
 		end
 	end,guy.Name)
