@@ -1,3 +1,4 @@
+
 local function Warning(text, object)
 	if object == nil and text == nil then
 		warn("[GERP HUB]: A provided argument doesn't exist! Stopping execution.")
@@ -1027,14 +1028,16 @@ local AllTechs = {
 
 		if not targetRoot.Parent then hum.AutoRotate = true return end
 
+		hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0, 45, 0)
+
 		SilentAimService.DisableTemporarly(1)
 		CFrameService.LookAt(hrp, targetRoot.CFrame)
 
-		task.wait(0.2)
+		task.wait(0.15)
 
 		ConnectionService.Yield(function()
 			return not targetRoot.Parent
-				or CFrameService.GetDistance(hrp, targetRoot) >= 7
+				or CFrameService.GetDistance(hrp, targetRoot) >= 8
 		end, 5)
 
 		if not targetRoot.Parent then hum.AutoRotate = true return end
@@ -1486,9 +1489,7 @@ LiveService.Handle = function(guy)
 end
 
 for _, guy in Live:GetChildren() do
-	guy:WaitForChild("HumanoidRootPart")
-	guy:WaitForChild("Humanoid")
-	LiveService.Handle(guy)
+	task.spawn(LiveService.Handle,guy)
 end
 
 Live.ChildAdded:Connect(function(guy)
