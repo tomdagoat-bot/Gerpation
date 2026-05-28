@@ -100,7 +100,6 @@ local Templates = {
 	},
 	Board = {
 		Skill        = BillboardGUIS.Skill,
-		Cooldowns    = BillboardGUIS.Cooldowns,
 		Counters     = BillboardGUIS.Counters,
 		Info         = BillboardGUIS.Info,
 		SkillsHolder = BillboardGUIS.Skills,
@@ -428,7 +427,6 @@ end
 local Kills      = TargetInfo:FindFirstChild("Kills")
 local Streak     = TargetInfo:FindFirstChild("Streak")
 local TotalKills = TargetInfo:FindFirstChild("Total Kills")
-local Ping       = TargetInfo:FindFirstChild("Ping")
 
 local Bars       = TargetInfo:FindFirstChild("Values")
 local HealthBar  = Bars:FindFirstChild("Health")
@@ -553,9 +551,7 @@ local function PauseStare()
 end
 
 Players.PlayerRemoving:Connect(function(LeavingPlayer : Player)
-	if LeavingPlayer == Players:GetPlayerFromCharacter(SilentAimService.Target) then
-		OnLeaving:Fire()
-	end	
+	OnLeaving:Fire(LeavingPlayer)	
 	ConnectionService.Disconnect("Live",nil,LeavingPlayer.Name)
 end)
 
@@ -657,8 +653,10 @@ local function UpdateInfo(player : Player, target, hum)
 
 		UserLabel.Text = player.DisplayName .." ( ".. TranslateMoveset(GetMoveset(target)).. " ) "
 
-		ConnectionService:NewConnection("PlayerLeft",OnLeaving.Event,"Connect","Target",function()
-			EndIt()
+		ConnectionService:NewConnection("PlayerLeft",OnLeaving.Event,"Connect","Target",function(PlayerLeft)
+			if player == PlayerLeft then
+				EndIt()
+			end
 		end)
 	else
 		UserLabel.Text = target.Name
@@ -756,8 +754,7 @@ local function Chant()
 	fx.Parent = head
 	fx.CFrame = head.CFrame
 
-	for _, v in fx.Attachment:GetChildren() do
-		v.Parent = fx
+	for _, v in fx:GetChildren() do
 		if v:IsA("ParticleEmitter") then
 			v:Emit(15)
 		end
@@ -882,7 +879,7 @@ local function CDTrigger(name,extra)
 	local cd = typeof(name) == "string" and CooldownsHolder:FindFirstChild(name) or name
 	if not cd then return end
 
-    name = typeof(name) == "string" and name or name.Name
+	name = typeof(name) == "string" and name or name.Name
 
 	local duration = CooldownValues[name]
 	cd:FindFirstChild("Fill").Size = UDim2.fromScale(1, 1)
@@ -985,10 +982,9 @@ local AllTechs = {
 
 		FrontDash()
 
+		task.wait(0.15)
 		local look = hrp.CFrame.LookVector
 		hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0,53,0)
-
-		task.wait(0.15)
 
 		repeat task.wait() until CFrameService.GetDistance(hrp,targetRoot) >= math.abs(Offset.Z)
 
@@ -1032,6 +1028,11 @@ local SideIDS = {
 local FrontIDS = {
 	["rbxassetid://10491993682"] = true,
 	["rbxassetid://10479335397"] = true,
+}
+local CounterIDS = {
+	["rbxassetid://12351854556"] = true,
+	["rbxassetid://15311685628"] = true,
+	["rbxassetid://78521642007560"] = true,
 }
 
 UserInputService:GetPropertyChangedSignal("MouseBehavior"):Connect(function()
@@ -1155,44 +1156,103 @@ LiveService.Info = function(guy)
 	local board = Templates.Board.Info:Clone()
 	board.Parent = guy:FindFirstChild("Head")
 
-    local image = MovesetIcon[GetMoveset(guy)]
+	local image = MovesetIcon[GetMoveset(guy)]
 
-    if image then
-        board.Moveset.Image = image
+	if image then
+		board.Moveset.Image = image
 	end
 
-	local buhbuhbuhhhh = board.Info
-	buhbuhbuhhhh.Ping:Destroy()
+	local InformationFrame = board.Info
 
-    local s = player:GetAttribute("CurrentStreak") or guy:GetAttribute("CurrentStreak") or 0
+	local CurrentStreak = player:GetAttribute("CurrentStreak") or guy:GetAttribute("CurrentStreak") or 0
 
-    if s < 0 then
-		buhbuhbuhhhh.Streak.Visible = false
+	if CurrentStreak < 0 then
+		InformationFrame.Streak.Visible = false
 	else
-		ChangeText(buhbuhbuhhhh.Streak,     s)
+		ChangeText(InformationFrame.Streak,     CurrentStreak)
 	end
 
-    ChangeText(buhbuhbuhhhh.Kills, player:GetAttribute("Kills"))
-    ChangeText(buhbuhbuhhhh["Total Kills"], player:GetAttribute("TotalKillsFrb"))
+	ChangeText(InformationFrame.Kills, player:GetAttribute("Kills"))
+	ChangeText(InformationFrame["Total Kills"], player:GetAttribute("TotalKillsFrb"))
 
 	ConnectionService:NewConnection("Kills",player:GetAttributeChangedSignal("Kills"),"Connect","Live",function()
-		ChangeText(buhbuhbuhhhh.Kills, player:GetAttribute("Kills"))
+		ChangeText(InformationFrame.Kills, player:GetAttribute("Kills"))
 	end,guy.Name)
 
 	ConnectionService:NewConnection("Total Kills",player:GetAttributeChangedSignal("TotalKillsFrb"),"Connect","Live",function()
-		ChangeText(buhbuhbuhhhh["Total Kills"], player:GetAttribute("TotalKillsFrb"))
+		ChangeText(InformationFrame["Total Kills"], player:GetAttribute("TotalKillsFrb"))
 	end,guy.Name)
 
 	local streakSignal = player:GetAttribute("CurrentStreak") ~= nil and player:GetAttributeChangedSignal("CurrentStreak") or guy:GetAttributeChangedSignal("CurrentStreak")
 
 	ConnectionService:NewConnection("Streak", streakSignal, "Connect", "Live", function()
-		s = player:GetAttribute("CurrentStreak") or guy:GetAttribute("CurrentStreak") or 0
-		if s < 0 then
-			buhbuhbuhhhh.Streak.Visible = false
+		CurrentStreak = player:GetAttribute("CurrentStreak") or guy:GetAttribute("CurrentStreak") or 0
+		if CurrentStreak < 0 then
+			InformationFrame.Streak.Visible = false
 		else
-			ChangeText(buhbuhbuhhhh.Streak,     s)
+			ChangeText(InformationFrame.Streak,     CurrentStreak)
 		end
 	end,guy.Name)
+	
+end
+
+local CounterDuration = 1
+
+local function UpdateLiveValues(bar : Frame,alpha : number)
+	local fill = bar:FindFirstChild("Fill")
+	TweenService:Create(fill,TweenInfos.BarTween,{Size = UDim2.fromScale(1,alpha)}):Play()
+end
+
+local function UpdateLiveEvasive(bar : Frame)
+	bar.Fill.Size = UDim2.fromScale(1,1)
+	TweenService:Create(bar.Fill,TweenInfo.new(CooldownValues.Evasive,Enum.EasingStyle.Linear),{Size = UDim2.fromScale(1,0)}):Play()
+end
+
+LiveService.Values = function(guy : Model)
+	local guy, hum : Humanoid, hrp : Part, player : Player = GetInstances(guy)
+	
+	local board = Templates.Board.ValuesHolder:Clone()
+	board.Parent = hrp
+	
+	UpdateLiveValues(board.Health,GetAlpha(hum.Health,hum.MaxHealth))
+	
+	ConnectionService:NewConnection("HealthUpdate",hum.HealthChanged,"Connect","Live",function()
+		UpdateLiveValues(board.Health,GetAlpha(hum.Health,hum.MaxHealth))
+	end)
+	
+	if player then
+		UpdateLiveValues(board.Ultimate,GetAlpha(player:GetAttribute("Ultimate"),100))
+		ConnectionService:NewConnection("UltimateUpdate",player:GetAttributeChangedSignal("Ultimate"),"Connect","Live",function()
+			UpdateLiveValues(board.Ultimate,GetAlpha(player:GetAttribute("Ultimate"),100))
+		end)
+	else
+		UpdateLiveValues(board.Ultimate,GetAlpha(0,100))
+	end
+end
+
+local function OnCounter(guy)
+	local char,hum,hrp = GetMe()
+	local guy, hisHum, hisHrp, player = GetInstances(guy)
+	
+	if CFrameService.GetDistance(hrp,hisHrp) < 8 then
+		local goal = CFrameService.IsBehind(hrp,hisHrp) and CFrame.new(0,0,8) or CFrame.new(0,0,-8)
+		CFrameService.Tween(hrp, hisHrp.CFrame * goal,0.3)
+	end
+	
+	local Highlight = HighlightService:Highlight("Counter",CounterDuration)
+	Highlight.Parent = hisHrp
+	
+	local counterFrame = hisHrp:FindFirstChild("Counters").Counter
+	counterFrame.Visible = true
+	ConnectionService:Delay(guy.Name.."-Counter",CounterDuration,function()
+		counterFrame.Visible = false
+	end)
+end
+
+LiveService.Counter = function(guy : Model)
+	local _, _, hrp : Part = GetInstances(guy)
+	local board = Templates.Board.Counters:Clone()
+	board.Parent = hrp
 end
 
 LiveService.Handle = function(guy : Model)
@@ -1225,15 +1285,17 @@ LiveService.Handle = function(guy : Model)
 		if SideIDS[id] or FrontIDS[id] then
 			if guy:GetAttribute("HadRagdoll") then
 				guy:SetAttribute("EvasiveCD",true)
-
+				UpdateLiveEvasive(hrp:FindFirstChild("Values"):FindFirstChild("Evasive"))
 				guy:SetAttribute("Evasive", CooldownValues["Evasive"])
 				CountDown(CooldownValues["Evasive"], 1, function(t)
-    				guy:SetAttribute("Evasive", t)
+					guy:SetAttribute("Evasive", t)
 				end, function()
-    				guy:SetAttribute("Evasive", 0)
-    				guy:SetAttribute("EvasiveCD", false)
+					guy:SetAttribute("Evasive", 0)
+					guy:SetAttribute("EvasiveCD", false)
 				end, guy.Name.."-Evasive", "Live", guy.Name)
 			end
+		elseif CounterIDS[id] then
+			OnCounter(guy)
 		end
 	end,guy.Name)
 
@@ -1247,9 +1309,21 @@ LiveService.Handle = function(guy : Model)
 
 	ConnectionService:NewConnection("Bye Daddy",guy.AncestryChanged,"Once","Live",function()
 		ConnectionService.Disconnect("Live",nil,guy.Name)
-	end,guy.Name)	
+	end,guy.Name)
+
+	local player = Players:GetPlayerFromCharacter(guy)
+
+	if player then
+		ConnectionService:NewConnection("PlayerLeft",OnLeaving.Event,"Connect","Live",function(PlayerLeft)
+			if player == PlayerLeft then
+				ConnectionService.Disconnect("Live",nil,guy.Name)
+			end
+		end)	
+	end
 
 	LiveService.Info(guy)
+	LiveService.Values(guy)
+	LiveService.Counter(guy)
 end
 
 for _, guy in Live:GetChildren() do
@@ -1261,6 +1335,8 @@ end
 Live.ChildAdded:Connect(function(guy)
 	guy:WaitForChild("HumanoidRootPart")
 	guy:WaitForChild("Humanoid")
+	LiveService.Handle(guy)
+
 	task.wait(0.5)
 	if guy.Name == SilentAimService.TargetName and SilentAimService.HadTarget then
 		SilentAimService.Target     = guy
@@ -1277,7 +1353,6 @@ Live.ChildAdded:Connect(function(guy)
 			EnableStare()
 		end
 	end
-	LiveService.Handle(guy)
 end)
 
 TogglesHolder.Position = UDim2.new(1.2, -10,0.5, 0)
