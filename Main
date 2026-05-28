@@ -792,7 +792,7 @@ local function Chant()
 	if h then h.Parent = char end
 	SoundService.PlaySound("Chant")
 
-	Debris:AddItem(fx, 3)
+	Debris:AddItem(fx, 1.5)
 end
 
 local function ToggleButton(name, onEnabled, onDisabled)
@@ -828,7 +828,7 @@ local function ToggleButton(name, onEnabled, onDisabled)
 
 		task.wait(TweenInfos.TechClicked.Time)
 		TweenService:Create(btn, TweenInfos.TechClicked, {Size = baseSize}):Play()
-		task.wait(0.6)
+		task.wait(0.4)
 		Debounce = false
 	end)
 
@@ -1001,7 +1001,7 @@ local AllTechs = {
 		hum.AutoRotate = false
 		SilentAimService.DisableTemporarly(2)
 
-		local Offset = origin == "Front" and CFrame.new(0, 0, 11) or CFrame.new(0, 0, -11)
+		local Offset = origin == "Front" and CFrame.new(0, 0, 12) or CFrame.new(0, 0, -12)
 
 		FrontDash()
 
@@ -1011,7 +1011,6 @@ local AllTechs = {
 
 		CFrameService.LookAt(hrp, targetRoot.CFrame * Offset)
 
-		-- Use Yield with a function condition and timeout to prevent infinite hang
 		ConnectionService.Yield(function()
 			return not targetRoot.Parent
 				or CFrameService.GetDistance(hrp, targetRoot) >= math.abs(Offset.Z)
@@ -1023,7 +1022,7 @@ local AllTechs = {
 
 		ConnectionService.Yield(function()
 			return not targetRoot.Parent
-				or CFrameService.GetDistance(hrp, targetRoot) <= 4
+				or CFrameService.GetDistance(hrp, targetRoot) <= 3
 		end, 5)
 
 		if not targetRoot.Parent then hum.AutoRotate = true return end
@@ -1114,7 +1113,7 @@ TweenService:Create(MagicHealthBar.Glow, TweenInfos.UI, {ImageTransparency = 0.7
 TweenService:Create(MagicHealthBar:WaitForChild("Bar").Bar,TweenInfos.UI,{ImageColor3 = Color3.fromRGB(200, 0, 0)}):Play()
 
 local function Connect()
-	task.wait(1)
+	task.wait(0.5)
 	local char, hum, hrp = GetMe()
 	local animator = hum:FindFirstChildOfClass("Animator")
 
@@ -1122,7 +1121,7 @@ local function Connect()
 
 	char:SetAttribute("UltimateName", "GERP HUB")
 	TweenService:Create(MagicHealthBar.Glow, TweenInfos.UI, {ImageTransparency = 0.7}):Play()
-	TweenService:Create(MagicHealthBar:WaitForChild("Bar").Bar,TweenInfos.UI,{ImageColor3 = Color3.fromRGB(200, 0, 0)}):Play()
+	TweenService:Create(MagicHealthBar:WaitForChild("Bar").Bar,TweenInfos.UI,{ImageColor3 = Color3.fromRGB(0, 0, 0)}):Play()
 
 	ConnectionService:NewConnection("Died", hum.Died, "Once", "Player", function()
 		ConnectionService.Disconnect("Player")
@@ -1150,6 +1149,7 @@ local function Connect()
 						and CFrame.new(0, 0, 4)
 						or  CFrame.new(0, 0, -4)
 					hrp.CFrame = targetRoot.CFrame * buh
+					CFrameService.LookAt(hrp,CFrame.new(0,0,-buh.Z))
 					hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0, 53, 15)
 				end
 
@@ -1206,6 +1206,11 @@ local function Connect()
 			end)
 			RestoreStare()
 		end
+	end)
+
+	ConnectionService:NewConnection("UltName", char:GetAttributeChangedSignal("UltimateName"), "Connect", "Player", function()
+		if char:GetAttribute("UltimateName") == "GERP HUB" then return end
+		char:SetAttribute("UltimateName", "GERP HUB")
 	end)
 end
 
@@ -1318,20 +1323,33 @@ local function OnCounter(guy)
 		PressKey("F",CounterDuration - 0.2)
 		CFrameService.Tween(hrp, hisHrp.CFrame * goal, 0.4,function() return hisHrp.CFrame * goal end)
 	end
+
+	ConnectionService:NewConnection("AntiCounter",RunService.RenderStepped,"Connect","Player",function()
+		if CFrameService.GetDistance(hrp, hisHrp) < 8 then
+			local oppositeDirection = -CFrameService.GetDirection(hisHrp.CFrame)
+			CFrameService.LookAt(hrp,oppositeDirection)
+		end
+	end)
 		
 	local sh = guy:FindFirstChild("Stare")
-	if sh then sh.Enabled = false end
+
+	if sh then 
+		sh.Enabled = false
+		sh.Parent = ReplicatedStorage 
+	end
 
 	local Highlight = HighlightService:Highlight("Counter", CounterDuration)
 	Highlight.Parent = hisHrp
-
+	
 	local counterFrame = hisHrp:FindFirstChild("Counters").Counter
 	counterFrame.Visible = true
-
+	
 	ConnectionService:Delay(guy.Name .. "-Counter", CounterDuration, function()
 		counterFrame.Visible = false
-		hrp.Anchored = false
-		if sh then sh.Enabled = true end
+		if sh then 
+			sh.Parent = guy 
+			sh.Enabled = true 
+		end
 	end)
 end
 
@@ -1358,7 +1376,11 @@ local function OnDeathCounter(guy)
 	end)
 	
 	local sh = guy:FindFirstChild("Stare")
-	if sh then sh.Enabled = false end
+
+	if sh then 
+		sh.Enabled = false
+		sh.Parent = ReplicatedStorage 
+	end
 
 	local Highlight = HighlightService:Highlight("Death", DeathCounterDuration)
 	Highlight.Parent = hisHrp
@@ -1368,7 +1390,7 @@ local function OnDeathCounter(guy)
 	
 	ConnectionService:Delay(guy.Name .. "-DeathCounter", DeathCounterDuration, function()
 		counterFrame.Visible = false
-		if sh then sh.Enabled = true end
+		if sh then sh.Parent = guy sh.Enabled = true end
 	end)
 end
 
@@ -1444,12 +1466,12 @@ LiveService.Handle = function(guy)
 				ConnectionService.Disconnect("Live", nil, guy.Name)
 			end
 		end, guy.Name)
-		ConnectionService:NewConnection("Ulted",player:GetAttributeChangedSignal("Ulted"),"Connect","Live",function()
-			if player:GetAttribute("Ulted") and GetMoveset(guy) == "Bald" then
+		ConnectionService:NewConnection("Ulted",guy:GetAttributeChangedSignal("Ulted"),"Connect","Live",function()
+			if guy:GetAttribute("Ulted") and GetMoveset(guy) == "Bald" then
 				SoundService.PlaySound("Ulted")
 				local highlight = HighlightService:Highlight("Ulted")
 				highlight.Parent = guy
-				ConnectionService.Yield(function() return not player:GetAttribute("Ulted") end,120)
+				ConnectionService.Yield(function() return not guy:GetAttribute("Ulted") end,120)
 				task.wait(0.2)
 				if guy:GetAttribute("UsedDeath") then
 					OnDeathCounter(guy)
@@ -1479,9 +1501,11 @@ Live.ChildAdded:Connect(function(guy)
 		SilentAimService.TargetName = nil
 		SilentAimService.HadTarget  = false
 
-		local h = HighlightService:Highlight("Stare")
-		if h then h.Parent = guy end
-		SilentAimService.Highlight = h
+		if Toggles["Silent Aim"] then
+			local h = HighlightService:Highlight("Stare")
+			if h then h.Parent = guy end
+			SilentAimService.Highlight = h
+		end
 
 		TargetInformation(true)
 
