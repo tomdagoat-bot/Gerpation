@@ -1,0 +1,26 @@
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+--[[
+    GetGenv
+]]--
+
+local FAKEGETGENV
+
+if not getgenv then
+	FAKEGETGENV = {}
+	function getgenv() return FAKEGETGENV end
+end
+
+if getgenv().GerpLoaded then
+	warn("[Gerp Hub]: Script Is Already Loaded!")
+	return
+end
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/tomdagoat-bot/Gerpation/refs/heads/main/Gerp%20Service"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/tomdagoat-bot/Gerpation/refs/heads/main/Gui"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/tomdagoat-bot/Gerpation/refs/heads/main/ChantFx"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/tomdagoat-bot/Gerpation/refs/heads/main/Main"))()
+
+getgenv().GerpLoaded = true
