@@ -1,0 +1,57 @@
+-- Objects To Lua Made By HairBaconGamming --
+local Module_Scripts = {}
+local Chant = Instance.new("Part")
+local _10 = Instance.new("ParticleEmitter")
+local _10_1 = Instance.new("ParticleEmitter")
+
+-- Properties --
+Chant.Anchored = true
+Chant.CFrame = CFrame.new(-81.5, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1)
+Chant.CanCollide = false
+Chant.CanQuery = false
+Chant.CanTouch = false
+Chant.Massless = true
+Chant.Size = Vector3.new(1.000, 1.000, 1.000)
+Chant.Transparency = 1
+Chant.Name = [[Chant]]
+Chant.Parent = game[ [[ReplicatedStorage]] ][ [[Gerp Hub]] ][ [[VFX]] ]
+_10.Acceleration = Vector3.new(0.000, -20.000, 0.000)
+_10.Brightness = 5
+_10.Color = ColorSequence.new({ColorSequenceKeypoint.new(0.000, Color3.new(0.537, 0.494, 1.000)), ColorSequenceKeypoint.new(1.000, Color3.new(0.294, 0.275, 0.533))})
+_10.Drag = 3
+_10.FlipbookMode = Enum.ParticleFlipbookMode.OneShot
+_10.Lifetime = NumberRange.new(0.600, 0.600)
+_10.Rate = 0
+_10.RotSpeed = NumberRange.new(-180.000, 180.000)
+_10.Rotation = NumberRange.new(-360.000, 360.000)
+_10.Size = NumberSequence.new({NumberSequenceKeypoint.new(0.000, 1.000, 0.000), NumberSequenceKeypoint.new(0.031, 1.091, 0.000), NumberSequenceKeypoint.new(0.063, 1.176, 0.000), NumberSequenceKeypoint.new(0.094, 1.256, 0.000), NumberSequenceKeypoint.new(0.125, 1.330, 0.000), NumberSequenceKeypoint.new(0.156, 1.399, 0.000), NumberSequenceKeypoint.new(0.188, 1.464, 0.000), NumberSequenceKeypoint.new(0.219, 1.523, 0.000), NumberSequenceKeypoint.new(0.250, 1.578, 0.000), NumberSequenceKeypoint.new(0.313, 1.675, 0.000), NumberSequenceKeypoint.new(0.375, 1.756, 0.000), NumberSequenceKeypoint.new(0.438, 1.822, 0.000), NumberSequenceKeypoint.new(0.500, 1.875, 0.000), NumberSequenceKeypoint.new(0.563, 1.916, 0.000), NumberSequenceKeypoint.new(0.625, 1.947, 0.000), NumberSequenceKeypoint.new(0.688, 1.969, 0.000), NumberSequenceKeypoint.new(0.750, 1.984, 0.000), NumberSequenceKeypoint.new(0.813, 1.993, 0.000), NumberSequenceKeypoint.new(1.000, 0.000, 0.000)})
+_10.Speed = NumberRange.new(30.000, 50.000)
+_10.SpreadAngle = Vector2.new(180.000, 180.000)
+_10.Squash = NumberSequence.new({NumberSequenceKeypoint.new(0.000, 0.000, 0.000), NumberSequenceKeypoint.new(0.500, -0.500, 0.200), NumberSequenceKeypoint.new(1.000, 0.000, 0.000)})
+_10.Texture = [[rbxassetid://12386386944]]
+_10.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0.000, 0.000, 0.000), NumberSequenceKeypoint.new(0.125, 0.002, 0.000), NumberSequenceKeypoint.new(0.188, 0.007, 0.000), NumberSequenceKeypoint.new(0.250, 0.016, 0.000), NumberSequenceKeypoint.new(0.313, 0.031, 0.000), NumberSequenceKeypoint.new(0.375, 0.053, 0.000), NumberSequenceKeypoint.new(0.438, 0.084, 0.000), NumberSequenceKeypoint.new(0.500, 0.125, 0.000), NumberSequenceKeypoint.new(0.563, 0.178, 0.000), NumberSequenceKeypoint.new(0.625, 0.244, 0.000), NumberSequenceKeypoint.new(0.688, 0.325, 0.000), NumberSequenceKeypoint.new(0.750, 0.422, 0.000), NumberSequenceKeypoint.new(0.781, 0.477, 0.000), NumberSequenceKeypoint.new(0.813, 0.536, 0.000), NumberSequenceKeypoint.new(0.844, 0.601, 0.000), NumberSequenceKeypoint.new(0.875, 0.670, 0.000), NumberSequenceKeypoint.new(0.906, 0.744, 0.000), NumberSequenceKeypoint.new(0.938, 0.824, 0.000), NumberSequenceKeypoint.new(0.969, 0.909, 0.000), NumberSequenceKeypoint.new(1.000, 1.000, 0.000)})
+_10.VelocityInheritance = 0.1
+_10.Name = [[10]]
+_10.Parent = Chant
+_10_1.Acceleration = Vector3.new(0.000, -20.000, 0.000)
+_10_1.Brightness = 5
+_10_1.Color = ColorSequence.new({ColorSequenceKeypoint.new(0.000, Color3.new(0.000, 0.000, 0.000)), ColorSequenceKeypoint.new(1.000, Color3.new(0.000, 0.000, 0.000))})
+_10_1.Drag = 3
+_10_1.FlipbookMode = Enum.ParticleFlipbookMode.OneShot
+_10_1.Lifetime = NumberRange.new(0.600, 0.600)
+_10_1.LightEmission = 0.3
+_10_1.Rate = 0
+_10_1.RotSpeed = NumberRange.new(-180.000, 180.000)
+_10_1.Rotation = NumberRange.new(-360.000, 360.000)
+_10_1.Size = NumberSequence.new({NumberSequenceKeypoint.new(0.000, 1.000, 0.000), NumberSequenceKeypoint.new(0.031, 1.091, 0.000), NumberSequenceKeypoint.new(0.063, 1.176, 0.000), NumberSequenceKeypoint.new(0.094, 1.256, 0.000), NumberSequenceKeypoint.new(0.125, 1.330, 0.000), NumberSequenceKeypoint.new(0.156, 1.399, 0.000), NumberSequenceKeypoint.new(0.188, 1.464, 0.000), NumberSequenceKeypoint.new(0.219, 1.523, 0.000), NumberSequenceKeypoint.new(0.250, 1.578, 0.000), NumberSequenceKeypoint.new(0.313, 1.675, 0.000), NumberSequenceKeypoint.new(0.375, 1.756, 0.000), NumberSequenceKeypoint.new(0.438, 1.822, 0.000), NumberSequenceKeypoint.new(0.500, 1.875, 0.000), NumberSequenceKeypoint.new(0.563, 1.916, 0.000), NumberSequenceKeypoint.new(0.625, 1.947, 0.000), NumberSequenceKeypoint.new(0.688, 1.969, 0.000), NumberSequenceKeypoint.new(0.750, 1.984, 0.000), NumberSequenceKeypoint.new(0.813, 1.993, 0.000), NumberSequenceKeypoint.new(1.000, 0.000, 0.000)})
+_10_1.Speed = NumberRange.new(30.000, 50.000)
+_10_1.SpreadAngle = Vector2.new(180.000, 180.000)
+_10_1.Squash = NumberSequence.new({NumberSequenceKeypoint.new(0.000, 0.000, 0.000), NumberSequenceKeypoint.new(0.500, -0.500, 0.200), NumberSequenceKeypoint.new(1.000, 0.000, 0.000)})
+_10_1.Texture = [[rbxassetid://12386386944]]
+_10_1.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0.000, 0.000, 0.000), NumberSequenceKeypoint.new(0.125, 0.002, 0.000), NumberSequenceKeypoint.new(0.188, 0.007, 0.000), NumberSequenceKeypoint.new(0.250, 0.016, 0.000), NumberSequenceKeypoint.new(0.313, 0.031, 0.000), NumberSequenceKeypoint.new(0.375, 0.053, 0.000), NumberSequenceKeypoint.new(0.438, 0.084, 0.000), NumberSequenceKeypoint.new(0.500, 0.125, 0.000), NumberSequenceKeypoint.new(0.563, 0.178, 0.000), NumberSequenceKeypoint.new(0.625, 0.244, 0.000), NumberSequenceKeypoint.new(0.688, 0.325, 0.000), NumberSequenceKeypoint.new(0.750, 0.422, 0.000), NumberSequenceKeypoint.new(0.781, 0.477, 0.000), NumberSequenceKeypoint.new(0.813, 0.536, 0.000), NumberSequenceKeypoint.new(0.844, 0.601, 0.000), NumberSequenceKeypoint.new(0.875, 0.670, 0.000), NumberSequenceKeypoint.new(0.906, 0.744, 0.000), NumberSequenceKeypoint.new(0.938, 0.824, 0.000), NumberSequenceKeypoint.new(0.969, 0.909, 0.000), NumberSequenceKeypoint.new(1.000, 1.000, 0.000)})
+_10_1.VelocityInheritance = 0.1
+_10_1.Name = [[10]]
+_10_1.Parent = Chant
+
+-- End --
+-- Thank you for using --
