@@ -1,9 +1,9 @@
 local function Warning(text, object)
-	if object == nil and text == " " then
+	if object == nil and text == nil then
 		warn("[GERP HUB]: A provided argument doesn't exist! Stopping execution.")
 		return "STOP"
-	elseif text ~= " " then
-		warn("[GERP HUB]: " .. text)
+	elseif text ~= nil then
+		warn("[GERP HUB]: " .. tostring(text))
 	end
 end
 
@@ -21,6 +21,7 @@ local MovesetIcon = {
 	["Hunter"] = "rbxassetid://15124465439", 
 	["Batter"] = "rbxassetid://15143529209", 
 	["Cyborg"] = "rbxassetid://15143528856",
+	["Monster"] = "rbxassetid://92669838586269"
 }
 
 local MovesetTranslation = { 
@@ -37,15 +38,15 @@ local MovesetTranslation = {
 	["Hunter"] = "Garou", 
 	["Batter"] = "Metal Bat", 
 	["Cyborg"] = "Genos", 
-	["Monster"] = "Moster Garou"
+	["Monster"] = "Monster Garou"
 }
 
-local TweenService     = game:GetService("TweenService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Debris           = game:GetService("Debris")
-local Players          = game:GetService("Players")
-local RunService       = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
+local TweenService        = game:GetService("TweenService")
+local ReplicatedStorage   = game:GetService("ReplicatedStorage")
+local Debris              = game:GetService("Debris")
+local Players             = game:GetService("Players")
+local RunService          = game:GetService("RunService")
+local UserInputService    = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local Plr      = Players.LocalPlayer
@@ -58,11 +59,11 @@ local Live = workspace:FindFirstChild("Live")
 
 local TweenInfos = {
 	TechClicked  = TweenInfo.new(0.1,  Enum.EasingStyle.Back,  Enum.EasingDirection.InOut),
-	Highlight    = TweenInfo.new(0.2, Enum.EasingStyle.Sine,  Enum.EasingDirection.Out),
+	Highlight    = TweenInfo.new(0.2,  Enum.EasingStyle.Sine,  Enum.EasingDirection.Out),
 	BarTween     = TweenInfo.new(0.2,  Enum.EasingStyle.Quad,  Enum.EasingDirection.Out),
 	TechFx       = TweenInfo.new(0.2,  Enum.EasingStyle.Back,  Enum.EasingDirection.Out),
 	TechFxOut    = TweenInfo.new(0.15, Enum.EasingStyle.Sine,  Enum.EasingDirection.In),
-	UI = TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+	UI           = TweenInfo.new(0.3,  Enum.EasingStyle.Sine,  Enum.EasingDirection.Out),
 }
 
 local Techs = {"Silent Aim", "Auto Dripz", "Auto Twisted"}
@@ -90,6 +91,7 @@ local BillboardGUIS = UIComponents:WaitForChild("Billboard Gui")
 local ScreenGUIS    = UIComponents:WaitForChild("Screen Gui")
 
 local OnLeaving = GerpComponents:FindFirstChild("OnLeaving")
+local UsedDeathCounter = GerpComponents:FindFirstChild("DC")
 
 local Templates = {
 	Screen = {
@@ -106,19 +108,20 @@ local Templates = {
 		ValuesHolder = BillboardGUIS.Values,
 	},
 	VFX = {
-		Counter      = VFXComponents.Counter,
-		Death        = VFXComponents["Death Counter"],
-		Tech         = VFXComponents["Tech Name"],
-		Stare        = VFXComponents.Stare,
+		Counter       = VFXComponents.Counter,
+		Death         = VFXComponents["Death Counter"],
+		Tech          = VFXComponents["Tech Name"],
+		Stare         = VFXComponents.Stare,
 		["Auto Tech"] = VFXComponents["Auto Tech"],
-		Chant = VFXComponents.Chant,
+		Chant         = VFXComponents.Chant,
+		Ulted = VFXComponents.Ulted,
 	},
 }
 
-local UI            = PlrGui:WaitForChild("Gerpation Hub")
+local UI              = PlrGui:WaitForChild("Gerpation Hub")
 local CooldownsHolder = UI:WaitForChild("Cooldowns")
-local TargetInfo    = UI:WaitForChild("Target Info")
-local TogglesHolder = UI:WaitForChild("Toggles")
+local TargetInfo      = UI:WaitForChild("Target Info")
+local TogglesHolder   = UI:WaitForChild("Toggles")
 
 UI.Enabled = false
 
@@ -135,17 +138,23 @@ local ConnectionService = {}
 
 ConnectionService.TargetConnections = {}
 ConnectionService.PlayerConnections = {}
+ConnectionService.Delays            = {}
+ConnectionService.LiveConnections   = {}
 
-ConnectionService.Delays            		 = {}
-
-ConnectionService.LiveConnections 	 = {}
-
-function ConnectionService:NewConnection(name, signal, connType, scope, callback,extra)
-	if Warning(" ", name) == "STOP"
-		or Warning(" ", signal) == "STOP"
-		or Warning(" ", connType) == "STOP"
-		or Warning(" ", scope) == "STOP" then
+function ConnectionService:NewConnection(name, signal, connType, scope, callback, extra)
+	if Warning(nil, name) == "STOP"
+		or Warning(nil, signal) == "STOP"
+		or Warning(nil, connType) == "STOP"
+		or Warning(nil, scope) == "STOP" then
 		return
+	end
+
+	-- Ensure the live sub-table exists before indexing
+	if scope ~= "Player" and scope ~= "Target" then
+		if Warning(nil, extra) == "STOP" then return end
+		if not ConnectionService.LiveConnections[extra] then
+			ConnectionService.LiveConnections[extra] = {}
+		end
 	end
 
 	local container = scope == "Player"
@@ -176,13 +185,15 @@ function ConnectionService:NewConnection(name, signal, connType, scope, callback
 	return conn
 end
 
-function ConnectionService.Disconnect(scope, name,extra)
-	if Warning(" ", scope) == "STOP" then return end
+function ConnectionService.Disconnect(scope, name, extra)
+	if Warning(nil, scope) == "STOP" then return end
 
 	local container = scope == "Player"
 		and ConnectionService.PlayerConnections
 		or scope == "Target" and ConnectionService.TargetConnections
-		or ConnectionService.LiveConnections[extra]
+		or (ConnectionService.LiveConnections[extra])
+
+	if not container then return end
 
 	if name then
 		if container[name] then
@@ -198,8 +209,8 @@ function ConnectionService.Disconnect(scope, name,extra)
 end
 
 function ConnectionService:Delay(name, waitTime, callback)
-	if Warning(" ", name) == "STOP"
-		or Warning(" ", callback) == "STOP" then
+	if Warning(nil, name) == "STOP"
+		or Warning(nil, callback) == "STOP" then
 		return
 	end
 
@@ -223,17 +234,29 @@ function ConnectionService.Cancel(name)
 	end
 end
 
+function ConnectionService.Yield(conditionFn, timeout)
+	if Warning(nil, conditionFn) == "STOP" then return end
+	local elapsed = 0
+	while not conditionFn() do
+		local dt = RunService.RenderStepped:Wait()
+		elapsed += dt
+		if timeout and elapsed >= timeout then
+			break
+		end
+	end
+end
+
 local CFrameService = {}
 local AllAxis = false
 
 function CFrameService.GetPosition(obj)
 	if typeof(obj) == "function" then obj = obj() end
-	if Warning(" ", obj) == "STOP" then return end
+	if Warning(nil, obj) == "STOP" then return end
 	return typeof(obj) == "Vector3" and obj or obj.Position
 end
 
 function CFrameService.GetCFrame(obj)
-	if Warning(" ", obj) == "STOP" then return end
+	if Warning(nil, obj) == "STOP" then return end
 	if typeof(obj) == "function" then obj = obj() end
 	if typeof(obj) == "CFrame" then return obj end
 	if typeof(obj) == "Vector3" then return CFrame.new(obj) end
@@ -241,7 +264,7 @@ function CFrameService.GetCFrame(obj)
 end
 
 function CFrameService.GetDistance(a, b)
-	if Warning(" ", a) == "STOP" or Warning(" ", b) == "STOP" then return end
+	if Warning(nil, a) == "STOP" or Warning(nil, b) == "STOP" then return end
 	local dis = (CFrameService.GetPosition(a) - CFrameService.GetPosition(b)).Magnitude
 	return math.round(dis)
 end
@@ -257,7 +280,7 @@ function CFrameService.GetDirection(at, goal)
 end
 
 function CFrameService.LookAt(part, goal)
-	if Warning(" ", part) == "STOP" or Warning(" ", goal) == "STOP" then return end
+	if Warning(nil, part) == "STOP" or Warning(nil, goal) == "STOP" then return end
 	goal = CFrameService.GetPosition(goal)
 
 	if AllAxis then
@@ -270,17 +293,17 @@ function CFrameService.LookAt(part, goal)
 	end
 end
 
-function CFrameService.IsBehind(part,position)
-	if Warning(" ", part) == "STOP" or Warning(" ", position) == "STOP" then return end
-	local direction = CFrameService.GetDirection(part,position)
+function CFrameService.IsBehind(part, position)
+	if Warning(nil, part) == "STOP" or Warning(nil, position) == "STOP" then return end
+	local direction = CFrameService.GetDirection(part, position)
 	local dot = CFrameService.GetCFrame(part).LookVector:Dot(direction)
 	return dot <= 0
 end
 
-function CFrameService.Tween(part, goal, duration,lookat)
-	if Warning(" ", part) == "STOP"
-		or Warning(" ", goal) == "STOP"
-		or Warning(" ", duration) == "STOP" then return end
+function CFrameService.Tween(part, goal, duration, lookat)
+	if Warning(nil, part) == "STOP"
+		or Warning(nil, goal) == "STOP"
+		or Warning(nil, duration) == "STOP" then return end
 
 	local elapsed = 0
 	part.Anchored = true
@@ -288,7 +311,6 @@ function CFrameService.Tween(part, goal, duration,lookat)
 	goal = CFrameService.GetCFrame(goal)
 
 	local hum
-
 	local me = part:FindFirstAncestorOfClass("Model")
 	if me and me:FindFirstChildOfClass("Humanoid") then
 		hum = me:FindFirstChildOfClass("Humanoid")
@@ -310,8 +332,8 @@ function CFrameService.Tween(part, goal, duration,lookat)
 		elapsed += dt
 		part.CFrame = CFrameService:Lerp(part, goal, GetAlpha(elapsed, duration))
 		if lookat then
-			CFrameService.LookAt(part,lookat) 
-		end  
+			CFrameService.LookAt(part, lookat)
+		end
 	end)
 end
 
@@ -355,7 +377,7 @@ local SoundService = {}
 
 function SoundService.PlaySound(sound)
 	sound = typeof(sound) == "string" and SoundComponents:FindFirstChild(sound) or sound
-	if Warning(" ", sound) == "STOP" then return end
+	if Warning(nil, sound) == "STOP" then return end
 
 	sound = sound:Clone()
 	sound.Parent = Camera
@@ -385,7 +407,10 @@ end
 
 function HighlightService:Highlight(name, duration)
 	local template = Templates.VFX[name]
-	if not template then Warning("Highlight template not found: " .. tostring(name)) return end
+	if not template then
+		Warning("Highlight template not found: " .. tostring(name))
+		return
+	end
 
 	local h = template:Clone()
 	h.Enabled = true
@@ -400,8 +425,8 @@ function HighlightService:Highlight(name, duration)
 	return h
 end
 
-local function CountDown(duration, rate, onTick, onEnd, name,container,extra)
-	if Warning(" ", duration) == "STOP" then return end
+local function CountDown(duration, rate, onTick, onEnd, name, container, extra)
+	if Warning(nil, duration) == "STOP" then return end
 
 	local t       = duration
 	local elapsed = 0
@@ -416,24 +441,24 @@ local function CountDown(duration, rate, onTick, onEnd, name,container,extra)
 				t = 0
 				onTick(t)
 				if onEnd then onEnd() end
-				ConnectionService.Disconnect("Player", name)
+				ConnectionService.Disconnect(container or "Player", name, extra)
 			else
 				onTick(t)
 			end
 		end
-	end,extra)
+	end, extra)
 end
 
-local Kills      = TargetInfo:FindFirstChild("Kills")
-local Streak     = TargetInfo:FindFirstChild("Streak")
-local TotalKills = TargetInfo:FindFirstChild("Total Kills")
+local Kills       = TargetInfo:FindFirstChild("Kills")
+local Streak      = TargetInfo:FindFirstChild("Streak")
+local TotalKills  = TargetInfo:FindFirstChild("Total Kills")
 
-local Bars       = TargetInfo:FindFirstChild("Values")
-local HealthBar  = Bars:FindFirstChild("Health")
-local EvasiveBar = Bars:FindFirstChild("Evasive")
+local Bars        = TargetInfo:FindFirstChild("Values")
+local HealthBar   = Bars:FindFirstChild("Health")
+local EvasiveBar  = Bars:FindFirstChild("Evasive")
 local UltimateBar = Bars:FindFirstChild("Ultimate")
 
-local UserLabel = TargetInfo:FindFirstChild("Profile"):WaitForChild("User")
+local UserLabel  = TargetInfo:FindFirstChild("Profile"):WaitForChild("User")
 local ProfilePic = TargetInfo:FindFirstChild("Profile"):WaitForChild("Background"):WaitForChild("Profile Picture")
 
 local function ChangeText(obj, text, name)
@@ -452,8 +477,7 @@ local function UpdateUltimate(alpha, value)
 end
 
 local function GetMoveset(guy)
-	local player = Players:GetPlayerFromCharacter(guy)
-	return player ~= nil and player:GetAttribute("Character") or guy:GetAttribute("Character") or "CUSTOM"
+	return guy:GetAttribute("Character") or "CUSTOM"
 end
 
 local function TranslateMoveset(char)
@@ -471,7 +495,7 @@ local function UpdateEvasive(alpha, left)
 		end, function()
 			TweenService:Create(EvasiveBar.Fill, TweenInfos.BarTween, {Size = UDim2.fromScale(0, 1)}):Play()
 			EvasiveBar:FindFirstChild("Title").Text = "Evasive"
-		end, "EvasiveBar", "Target")
+		end, "EvasiveBar", "Target") -- fixed: scope is "Target" to match disconnect
 	else
 		ConnectionService.Disconnect("Target", "EvasiveBar")
 		TweenService:Create(EvasiveBar.Fill, TweenInfos.BarTween, {Size = UDim2.fromScale(0, 1)}):Play()
@@ -493,8 +517,8 @@ local function GetProfile(player)
 	return "rbxassetid://120616225848628"
 end
 
-local SilentAimService = {}
-SilentAimService.Target = nil
+local SilentAimService   = {}
+SilentAimService.Target  = nil
 
 local WasEnabled = false
 local Toggles    = {}
@@ -520,25 +544,29 @@ end
 
 function SilentAimService.EnableTemporarly(duration, goal)
 	EnableStare(goal)
-	ConnectionService:Delay("StareEnabled", duration, function()
-		if not Toggles["Silent Aim"] then
-			DisableStare()
-		end
-	end)
+	if duration then
+		ConnectionService:Delay("StareEnabled", duration, function()
+			if not Toggles["Silent Aim"] then
+				DisableStare()
+			end
+		end)
+	end
 end
 
 function SilentAimService.DisableTemporarly(duration)
 	DisableStare()
-	ConnectionService:Delay("StareEnabled", duration, function()
-		if Toggles["Silent Aim"] then
-			EnableStare()
-		end
-	end)
+	if duration then
+		ConnectionService:Delay("StareEnabled", duration, function()
+			if Toggles["Silent Aim"] then
+				EnableStare()
+			end
+		end)
+	end
 end
 
 local function RestoreStare()
 	if WasEnabled then
-		SilentAimService.EnableTemporarly()
+		EnableStare()
 		WasEnabled = false
 	end
 end
@@ -550,12 +578,12 @@ local function PauseStare()
 	DisableStare()
 end
 
-Players.PlayerRemoving:Connect(function(LeavingPlayer : Player)
-	OnLeaving:Fire(LeavingPlayer)	
-	ConnectionService.Disconnect("Live",nil,LeavingPlayer.Name)
+Players.PlayerRemoving:Connect(function(LeavingPlayer)
+	OnLeaving:Fire(LeavingPlayer)
+	ConnectionService.Disconnect("Live", nil, LeavingPlayer.Name)
 end)
 
-local function UpdateInfo(player : Player, target, hum)
+local function UpdateInfo(player, target, hum)
 	ConnectionService.Disconnect("Target")
 
 	local hp = GetAlpha(hum.Health, hum.MaxHealth)
@@ -566,12 +594,13 @@ local function UpdateInfo(player : Player, target, hum)
 
 	local function EndIt()
 		DisableStare()
-		SilentAimService.TargetName   = target.Name
-		SilentAimService.HadTarget    = true 
-		SilentAimService.Target       = nil
+		SilentAimService.TargetName = target.Name
+		SilentAimService.HadTarget  = true
+		SilentAimService.Target     = nil
 		local stare = target:FindFirstChild("Stare")
 		if stare then HighlightService.FadeOut(stare) end
 		ConnectionService.Disconnect("Target")
+		TweenService:Create(TargetInfo, TweenInfos.UI, {Position = UDim2.new(-0.3, 10, 0.55, 0)}):Play()
 	end
 
 	if player then
@@ -586,18 +615,18 @@ local function UpdateInfo(player : Player, target, hum)
 			or target:GetAttribute("CurrentStreak")
 			or 0
 
-		local ultAlpha    = GetAlpha(player:GetAttribute("Ultimate"), 100)
+		local ultAlpha     = GetAlpha(player:GetAttribute("Ultimate"), 100)
 		local evasiveAlpha = GetAlpha(target:GetAttribute("Evasive") or 0, CooldownValues["Evasive"])
 
-		ChangeText(Kills,      targetKills)
+		ChangeText(Kills, targetKills)
 		if targetStreak < 0 then
 			Streak.Visible = false
 		else
-			ChangeText(Streak,     targetStreak)
+			ChangeText(Streak, targetStreak)
 		end
 		ChangeText(TotalKills, targetTotalKills)
 		UpdateUltimate(ultAlpha, ultAlpha * 100)
-		UpdateEvasive(evasiveAlpha, CooldownValues["Evasive"])
+		UpdateEvasive(evasiveAlpha, target:GetAttribute("Evasive") or 0)
 
 		if killsStat then
 			ConnectionService:NewConnection("Kills", killsStat:GetPropertyChangedSignal("Value"), "Connect", "Target", function()
@@ -628,7 +657,7 @@ local function UpdateInfo(player : Player, target, hum)
 			if s < 0 then
 				Streak.Visible = false
 			else
-				ChangeText(Streak,     s)
+				ChangeText(Streak, s)
 			end
 		end)
 
@@ -640,20 +669,16 @@ local function UpdateInfo(player : Player, target, hum)
 		ConnectionService:NewConnection("EvasiveUsed", target:GetAttributeChangedSignal("EvasiveCD"), "Connect", "Target", function()
 			if target:GetAttribute("EvasiveCD") then
 				local currentEvasive = target:GetAttribute("Evasive") or CooldownValues["Evasive"]
-				local freshAlpha = GetAlpha(currentEvasive, CooldownValues["Evasive"])
+				local freshAlpha     = GetAlpha(currentEvasive, CooldownValues["Evasive"])
 				UpdateEvasive(freshAlpha, currentEvasive)
 			else
 				UpdateEvasive(0, 0)
 			end
 		end)
 
-		ConnectionService:NewConnection("Moveset", player:GetAttributeChangedSignal("Character"), "Connect", "Target", function()
-			UserLabel.Text = player.DisplayName .." ( ".. TranslateMoveset(GetMoveset(target)).. " ) "
-		end)
+		UserLabel.Text = player.DisplayName .. " ( " .. TranslateMoveset(GetMoveset(target)) .. " ) "
 
-		UserLabel.Text = player.DisplayName .." ( ".. TranslateMoveset(GetMoveset(target)).. " ) "
-
-		ConnectionService:NewConnection("PlayerLeft",OnLeaving.Event,"Connect","Target",function(PlayerLeft)
+		ConnectionService:NewConnection("PlayerLeft", OnLeaving.Event, "Connect", "Target", function(PlayerLeft)
 			if player == PlayerLeft then
 				EndIt()
 			end
@@ -663,6 +688,10 @@ local function UpdateInfo(player : Player, target, hum)
 		UpdateUltimate(1, 100)
 		UpdateEvasive(0, 0)
 	end
+
+	ConnectionService:NewConnection("Moveset", target:GetAttributeChangedSignal("Character"), "Connect", "Target", function()
+		UserLabel.Text = player.DisplayName .. " ( " .. TranslateMoveset(GetMoveset(target)) .. " ) "
+	end)
 
 	ProfilePic.Image = GetProfile(player)
 	UpdateHealth(hp, hp * 100)
@@ -689,13 +718,13 @@ local function TargetInformation(enabled)
 	if enabled then
 		local target, hum, _, player = GetInstances(SilentAimService.Target)
 		if target and hum then
-			TweenService:Create(TargetInfo,TweenInfos.UI,{Position = UDim2.new(0, 10,0.55, 0)}):Play()
+			TweenService:Create(TargetInfo, TweenInfos.UI, {Position = UDim2.new(0, 10, 0.55, 0)}):Play()
 			UpdateInfo(player, target, hum)
 			local h = HighlightService:Highlight("Stare")
 			if h then h.Parent = target end
 		end
 	else
-		TweenService:Create(TargetInfo,TweenInfos.UI,{Position = UDim2.new(-0.3, 10,0.55, 0)}):Play()
+		TweenService:Create(TargetInfo, TweenInfos.UI, {Position = UDim2.new(-0.3, 10, 0.55, 0)}):Play()
 		ConnectionService.Disconnect("Target")
 	end
 end
@@ -709,25 +738,23 @@ local TechCallbacks = {
 			if not nearest then return end
 
 			if SilentAimService.Target == nearest then
-				-- Deselect
 				local old = SilentAimService.Target
-				SilentAimService.Target = nil
-
+				SilentAimService.Target     = nil
 				SilentAimService.TargetName = nil
-				SilentAimService.HadTarget = false
+				SilentAimService.HadTarget  = false
 				DisableStare()
 				local stare = old and old:FindFirstChild("Stare")
 				if stare then HighlightService.FadeOut(stare) end
 				TargetInformation(false)
 			else
-				-- Switch target
+				if nearest:FindFirstChildOfClass("Humanoid").Health <= 0 then return end
 				if SilentAimService.Target then
 					local stare = SilentAimService.Target:FindFirstChild("Stare")
 					if stare then HighlightService.FadeOut(stare) end
 				end
 				SilentAimService.TargetName = nil
-				SilentAimService.HadTarget = false
-				SilentAimService.Target = nearest
+				SilentAimService.HadTarget  = false
+				SilentAimService.Target     = nearest
 				if Toggles["Silent Aim"] then EnableStare() end
 				TargetInformation(true)
 			end
@@ -747,10 +774,11 @@ end
 local Debounce = false
 
 local function Chant()
+	local char = GetMe()
+	local head = char:FindFirstChild("Head")
+	if not head then return end
+
 	local fx = Templates.VFX.Chant:Clone()
-
-	local head = GetMe():FindFirstChild("Head")
-
 	fx.Parent = head
 	fx.CFrame = head.CFrame
 
@@ -761,10 +789,10 @@ local function Chant()
 	end
 
 	local h = HighlightService:Highlight("Auto Tech", 0.4)
-	if h then h.Parent = GetMe() end
+	if h then h.Parent = char end
 	SoundService.PlaySound("Chant")
 
-	Debris:AddItem(fx,1.5)
+	Debris:AddItem(fx, 3)
 end
 
 local function ToggleButton(name, onEnabled, onDisabled)
@@ -776,7 +804,7 @@ local function ToggleButton(name, onEnabled, onDisabled)
 	local btn = Templates.Screen.Tech:Clone()
 	btn.Parent = TogglesHolder
 	btn.Name   = name
-	btn.Text = " "
+	btn.Text   = " "
 
 	ChangeText(btn:FindFirstChild("TechName"), EnabledFormat(Toggles[name]), name)
 
@@ -800,6 +828,7 @@ local function ToggleButton(name, onEnabled, onDisabled)
 
 		task.wait(TweenInfos.TechClicked.Time)
 		TweenService:Create(btn, TweenInfos.TechClicked, {Size = baseSize}):Play()
+		task.wait(0.6)
 		Debounce = false
 	end)
 
@@ -821,7 +850,6 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 					btn:SetAttribute("Toggled", not btn:GetAttribute("Toggled"))
 				end
 			else
-				-- Illegal techs (like Lock Target) fire directly
 				if TechCallbacks.Enabled[tech] then
 					TechCallbacks.Enabled[tech]()
 				end
@@ -862,7 +890,7 @@ end
 ]]--
 
 local function Cooldown(name)
-	if Warning(" ", name) == "STOP" then return end
+	if Warning(nil, name) == "STOP" then return end
 	local cd = Templates.Screen.Cooldown
 	if not cd then return end
 	cd = cd:Clone()
@@ -875,7 +903,7 @@ for skill in pairs(CooldownValues) do
 	Cooldown(skill)
 end
 
-local function CDTrigger(name,extra)
+local function CDTrigger(name, extra)
 	local cd = typeof(name) == "string" and CooldownsHolder:FindFirstChild(name) or name
 	if not cd then return end
 
@@ -884,7 +912,9 @@ local function CDTrigger(name,extra)
 	local duration = CooldownValues[name]
 	cd:FindFirstChild("Fill").Size = UDim2.fromScale(1, 1)
 
-	TweenService:Create(cd:FindFirstChild("Fill"), TweenInfo.new(duration, Enum.EasingStyle.Linear),{Size = UDim2.fromScale(0, 1)}):Play()
+	TweenService:Create(cd:FindFirstChild("Fill"),
+		TweenInfo.new(duration, Enum.EasingStyle.Linear),
+		{Size = UDim2.fromScale(0, 1)}):Play()
 
 	CountDown(duration, 1, function(t)
 		cd:FindFirstChildOfClass("TextLabel").Text = t > 0 and (name .. ": " .. t .. "s") or name
@@ -894,7 +924,7 @@ local function CDTrigger(name,extra)
 end
 
 local function TechFx(name)
-	if Warning(" ", name) == "STOP" then return end
+	if Warning(nil, name) == "STOP" then return end
 	local char = GetMe()
 	local head = char:FindFirstChild("Head")
 	if not head then return end
@@ -951,55 +981,68 @@ local AllTechs = {
 		FrontDash()
 
 		local cf = CFrameService.GetCFrame(root)
-		CFrameService.LookAt(root, cf * CFrame.new(6,  0,  2)) task.wait(0.1)
-		CFrameService.LookAt(root, cf * CFrame.new(8,  0, -6)) task.wait(0.1)
-		CFrameService.LookAt(root, cf * CFrame.new(0,  0,-12)) task.wait(0.4)
-		CFrameService.LookAt(root,targetRoot)                  task.wait(0.3)
+		CFrameService.LookAt(root, cf * CFrame.new(6,   0,  2)) task.wait(0.1)
+		CFrameService.LookAt(root, cf * CFrame.new(8,   0, -6)) task.wait(0.1)
+		CFrameService.LookAt(root, cf * CFrame.new(0,   0,-12)) task.wait(0.3)
+		CFrameService.LookAt(root, targetRoot)                   task.wait(0.3)
 
-		SilentAimService.EnableTemporarly(0.2, targetRoot)
+		SilentAimService.EnableTemporarly(0.4, targetRoot)
 		hum.AutoRotate = true
 	end,
 
-	["Auto Dripz"] = function(targetRoot,origin)
+	["Auto Dripz"] = function(targetRoot, origin)
 		local char, hum, hrp = GetMe()
 		if not hrp or not targetRoot then
-			Warning("One of the roots doesn't exist for Auto Twisted")
+			Warning("One of the roots doesn't exist for Auto Dripz")
 			return
 		end
+
 		TechFx("Dripz Tech")
 		hum.AutoRotate = false
 		SilentAimService.DisableTemporarly(2)
 
-		for _, l in char:GetChildren() do
-			if l:IsA("Part") then
-				l.CanCollide = false
-			end
-		end
-
-		local Offset = origin == "Front" and CFrame.new(0,0,12) or CFrame.new(0,0,-12)
-
-		CFrameService.LookAt(hrp,targetRoot.CFrame * Offset)
+		local Offset = origin == "Front" and CFrame.new(0, 0, 11) or CFrame.new(0, 0, -11)
 
 		FrontDash()
 
+		hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0, 53, 0)
+
 		task.wait(0.15)
-		local look = hrp.CFrame.LookVector
-		hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0,53,0)
 
-		repeat task.wait() until CFrameService.GetDistance(hrp,targetRoot) >= math.abs(Offset.Z)
+		CFrameService.LookAt(hrp, targetRoot.CFrame * Offset)
 
-		SilentAimService.EnableTemporarly(0.5,targetRoot)
+		-- Use Yield with a function condition and timeout to prevent infinite hang
+		ConnectionService.Yield(function()
+			return not targetRoot.Parent
+				or CFrameService.GetDistance(hrp, targetRoot) >= math.abs(Offset.Z)
+		end, 5)
 
-		repeat task.wait() until CFrameService.GetDistance(hrp,targetRoot) <= 4
+		if not targetRoot.Parent then hum.AutoRotate = true return end
+
+		SilentAimService.EnableTemporarly(0.5, targetRoot)
+
+		ConnectionService.Yield(function()
+			return not targetRoot.Parent
+				or CFrameService.GetDistance(hrp, targetRoot) <= 4
+		end, 5)
+
+		if not targetRoot.Parent then hum.AutoRotate = true return end
+
 		SilentAimService.DisableTemporarly(1)
-
-		CFrameService.LookAt(hrp,targetRoot.CFrame)
+		CFrameService.LookAt(hrp, targetRoot.CFrame)
 
 		task.wait(0.2)
 
-		repeat task.wait() until CFrameService.GetDistance(hrp,targetRoot) >= 7
+		ConnectionService.Yield(function()
+			return not targetRoot.Parent
+				or CFrameService.GetDistance(hrp, targetRoot) >= 7
+		end, 5)
 
-		CFrameService.LookAt(hrp,targetRoot.CFrame)
+		if not targetRoot.Parent then hum.AutoRotate = true return end
+
+		CFrameService.LookAt(hrp, targetRoot.CFrame)
+		task.wait(0.2)
+		CFrameService.LookAt(hrp, targetRoot.CFrame)
 
 		hum.AutoRotate = true
 	end,
@@ -1009,7 +1052,6 @@ local UppercutIDS = {
 	["rbxassetid://10503381238"] = true,
 	["rbxassetid://13379003796"] = true,
 }
-
 local ForthIDS = {
 	["rbxassetid://13294471966"] = true,
 	["rbxassetid://10469643643"] = true,
@@ -1034,6 +1076,11 @@ local CounterIDS = {
 	["rbxassetid://15311685628"] = true,
 	["rbxassetid://78521642007560"] = true,
 }
+local SaitamaIDS = {
+	["rbxassetid://11365563255"] = true,
+	["rbxassetid://12983333733"] = true,
+	["rbxassetid://13927612951"] = true,
+}
 
 UserInputService:GetPropertyChangedSignal("MouseBehavior"):Connect(function()
 	if UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter then
@@ -1043,28 +1090,39 @@ UserInputService:GetPropertyChangedSignal("MouseBehavior"):Connect(function()
 	end
 end)
 
-local function PressKey(Key : Enum.KeyCode,Duration)
-	if Warning(" ",Key) == "STOP" then
-		return
-	end
+local function PressKey(Key, Duration)
+	if Warning(nil, Key) == "STOP" then return end
 	Key = KeyCode(Key)
-	VirtualInputManager:SendKeyEvent(true,Key, false, game)
-	ConnectionService:Delay("KeyRelease"..Key.Name,Duration,function()
-		VirtualInputManager:SendKeyEvent(false,Key, false, game)
+	VirtualInputManager:SendKeyEvent(true, Key, false, game)
+	ConnectionService:Delay("KeyRelease" .. Key.Name, Duration, function()
+		VirtualInputManager:SendKeyEvent(false, Key, false, game)
 	end)
 end
 
 local HadRagdoll = false
 
 local function Jump()
-	local _,Humanoid = GetMe()
+	local _, Humanoid = GetMe()
 	Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 end
 
+local UltimateGui = PlrGui:WaitForChild("Bar")
+UltimateGui.ResetOnSpawn = false
+
+local MagicHealthBar = UltimateGui.MagicHealth.Health
+TweenService:Create(MagicHealthBar.Glow, TweenInfos.UI, {ImageTransparency = 0.7}):Play()
+TweenService:Create(MagicHealthBar:WaitForChild("Bar").Bar,TweenInfos.UI,{ImageColor3 = Color3.fromRGB(200, 0, 0)}):Play()
+
 local function Connect()
 	task.wait(1)
-	local char : Model, hum : Humanoid, hrp : Part = GetMe()
+	local char, hum, hrp = GetMe()
 	local animator = hum:FindFirstChildOfClass("Animator")
+
+	MagicHealthBar = PlrGui:WaitForChild("Bar").MagicHealth.Health
+
+	char:SetAttribute("UltimateName", "GERP HUB")
+	TweenService:Create(MagicHealthBar.Glow, TweenInfos.UI, {ImageTransparency = 0.7}):Play()
+	TweenService:Create(MagicHealthBar:WaitForChild("Bar").Bar,TweenInfos.UI,{ImageColor3 = Color3.fromRGB(200, 0, 0)}):Play()
 
 	ConnectionService:NewConnection("Died", hum.Died, "Once", "Player", function()
 		ConnectionService.Disconnect("Player")
@@ -1076,22 +1134,23 @@ local function Connect()
 
 	ConnectionService:NewConnection("AnimationPlayed", animator.AnimationPlayed, "Connect", "Player",
 		function(track)
-			local anim = track.Animation
+			local anim        = track.Animation
 			local target, _, targetRoot = GetInstances(NearestPlayer(false))
 
 			if UppercutIDS[anim.AnimationId] then
 				if char:GetAttribute("DragonUppercut") then return end
-				if CFrameService.GetDistance(hrp,targetRoot) > 8 then return end
+				if not targetRoot or CFrameService.GetDistance(hrp, targetRoot) > 8 then return end
 				if IsShiftLocked() then return end
 				if IsDashOnCD() then return end
 
 				if Toggles["Auto Dripz"] then
 					hum.WalkSpeed = 0
 					hum.JumpPower = 0
-					local buh = CFrameService.IsBehind(hrp,targetRoot) and CFrame.new(0,0,4) or CFrame.new(0,0,-4)
+					local buh = CFrameService.IsBehind(hrp, targetRoot)
+						and CFrame.new(0, 0, 4)
+						or  CFrame.new(0, 0, -4)
 					hrp.CFrame = targetRoot.CFrame * buh
-					local look = hrp.CFrame.LookVector
-					hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0,53,20)
+					hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0, 53, 15)
 				end
 
 				ConnectionService:NewConnection("UppercutHit",
@@ -1099,14 +1158,17 @@ local function Connect()
 						if Toggles["Auto Dripz"] then
 							if IsShiftLocked() then return end
 							if IsDashOnCD() then return end
-							AllTechs["Auto Dripz"](targetRoot,CFrameService.IsBehind(hrp,targetRoot) and "Back" or "Front")
+							AllTechs["Auto Dripz"](
+								targetRoot,
+								CFrameService.IsBehind(hrp, targetRoot) and "Back" or "Front"
+							)
 							hum.WalkSpeed = 16
 							hum.JumpPower = 45
 						end
 					end)
 
 			elseif ForthIDS[anim.AnimationId] then
-				if CFrameService.GetDistance(hrp,targetRoot) > 8 then return end
+				if not targetRoot or CFrameService.GetDistance(hrp, targetRoot) > 8 then return end
 				if IsShiftLocked() then return end
 				if IsDashOnCD() then return end
 				hum.WalkSpeed = 0
@@ -1120,17 +1182,15 @@ local function Connect()
 							hum.JumpPower = 45
 						end
 					end)
+
 			elseif SideIDS[anim.AnimationId] and not workspace:GetAttribute("NoDashCooldown") then
-				CDTrigger("Side Dash") 
-				if HadRagdoll then
-					CDTrigger("Evasive")
-				end 
+				CDTrigger("Side Dash")
+				if HadRagdoll then CDTrigger("Evasive") end
+
 			elseif FrontIDS[anim.AnimationId] and not workspace:GetAttribute("NoDashCooldown") then
 				FrontDashTick = tick()
 				CDTrigger("Front Dash")
-				if HadRagdoll then
-					CDTrigger("Evasive")
-				end 
+				if HadRagdoll then CDTrigger("Evasive") end
 			end
 		end)
 
@@ -1139,13 +1199,22 @@ local function Connect()
 	end)
 
 	ConnectionService:NewConnection("Unragdolled", char.ChildRemoved, "Connect", "Player", function(child)
-		if child.Name == "Ragdoll" then HadRagdoll = true ConnectionService:Delay("Has Ragdoll",0.2,function() HadRagdoll = false end) RestoreStare() end
+		if child.Name == "Ragdoll" then
+			HadRagdoll = true
+			ConnectionService:Delay("Has Ragdoll", 0.2, function()
+				HadRagdoll = false
+			end)
+			RestoreStare()
+		end
 	end)
-
 end
 
 Connect()
 Plr.CharacterAdded:Connect(Connect)
+
+--[[
+    Live Service
+]]--
 
 local LiveService = {}
 
@@ -1157,134 +1226,188 @@ LiveService.Info = function(guy)
 	board.Parent = guy:FindFirstChild("Head")
 
 	local image = MovesetIcon[GetMoveset(guy)]
-
 	if image then
 		board.Moveset.Image = image
 	end
 
 	local InformationFrame = board.Info
-
-	local CurrentStreak = player:GetAttribute("CurrentStreak") or guy:GetAttribute("CurrentStreak") or 0
+	local CurrentStreak    = player:GetAttribute("CurrentStreak") or guy:GetAttribute("CurrentStreak") or 0
 
 	if CurrentStreak < 0 then
 		InformationFrame.Streak.Visible = false
 	else
-		ChangeText(InformationFrame.Streak,     CurrentStreak)
+		ChangeText(InformationFrame.Streak, CurrentStreak)
 	end
 
-	ChangeText(InformationFrame.Kills, player:GetAttribute("Kills"))
-	ChangeText(InformationFrame["Total Kills"], player:GetAttribute("TotalKillsFrb"))
+	ChangeText(InformationFrame.Kills,            player:GetAttribute("Kills"))
+	ChangeText(InformationFrame["Total Kills"],   player:GetAttribute("TotalKillsFrb"))
 
-	ConnectionService:NewConnection("Kills",player:GetAttributeChangedSignal("Kills"),"Connect","Live",function()
+	ConnectionService:NewConnection("Kills", player:GetAttributeChangedSignal("Kills"), "Connect", "Live", function()
 		ChangeText(InformationFrame.Kills, player:GetAttribute("Kills"))
-	end,guy.Name)
+	end, guy.Name)
 
-	ConnectionService:NewConnection("Total Kills",player:GetAttributeChangedSignal("TotalKillsFrb"),"Connect","Live",function()
+	ConnectionService:NewConnection("Total Kills", player:GetAttributeChangedSignal("TotalKillsFrb"), "Connect", "Live", function()
 		ChangeText(InformationFrame["Total Kills"], player:GetAttribute("TotalKillsFrb"))
-	end,guy.Name)
+	end, guy.Name)
 
-	local streakSignal = player:GetAttribute("CurrentStreak") ~= nil and player:GetAttributeChangedSignal("CurrentStreak") or guy:GetAttributeChangedSignal("CurrentStreak")
+	local streakSignal = player:GetAttribute("CurrentStreak") ~= nil
+		and player:GetAttributeChangedSignal("CurrentStreak")
+		or  guy:GetAttributeChangedSignal("CurrentStreak")
 
 	ConnectionService:NewConnection("Streak", streakSignal, "Connect", "Live", function()
 		CurrentStreak = player:GetAttribute("CurrentStreak") or guy:GetAttribute("CurrentStreak") or 0
 		if CurrentStreak < 0 then
 			InformationFrame.Streak.Visible = false
 		else
-			ChangeText(InformationFrame.Streak,     CurrentStreak)
+			ChangeText(InformationFrame.Streak, CurrentStreak)
 		end
-	end,guy.Name)
-	
+	end, guy.Name)
 end
 
 local CounterDuration = 1
+local DeathCounterDuration = 10
 
-local function UpdateLiveValues(bar : Frame,alpha : number)
+local function UpdateLiveValues(bar, alpha)
 	local fill = bar:FindFirstChild("Fill")
-	TweenService:Create(fill,TweenInfos.BarTween,{Size = UDim2.fromScale(1,alpha)}):Play()
+	TweenService:Create(fill, TweenInfos.BarTween, {Size = UDim2.fromScale(1, alpha)}):Play()
 end
 
-local function UpdateLiveEvasive(bar : Frame)
-	bar.Fill.Size = UDim2.fromScale(1,1)
-	TweenService:Create(bar.Fill,TweenInfo.new(CooldownValues.Evasive,Enum.EasingStyle.Linear),{Size = UDim2.fromScale(1,0)}):Play()
+local function UpdateLiveEvasive(bar)
+	bar.Fill.Size = UDim2.fromScale(1, 1)
+	TweenService:Create(bar.Fill,
+		TweenInfo.new(CooldownValues.Evasive, Enum.EasingStyle.Linear),
+		{Size = UDim2.fromScale(1, 0)}):Play()
 end
 
-LiveService.Values = function(guy : Model)
-	local guy, hum : Humanoid, hrp : Part, player : Player = GetInstances(guy)
-	
+LiveService.Values = function(guy)
+	local guy, hum, hrp, player = GetInstances(guy)
+
 	local board = Templates.Board.ValuesHolder:Clone()
 	board.Parent = hrp
-	
-	UpdateLiveValues(board.Health,GetAlpha(hum.Health,hum.MaxHealth))
-	
-	ConnectionService:NewConnection("HealthUpdate",hum.HealthChanged,"Connect","Live",function()
-		UpdateLiveValues(board.Health,GetAlpha(hum.Health,hum.MaxHealth))
-	end)
-	
+
+	UpdateLiveValues(board.Health, GetAlpha(hum.Health, hum.MaxHealth))
+
+	ConnectionService:NewConnection("HealthUpdate", hum.HealthChanged, "Connect", "Live", function()
+		if hum.Health <= 0 then
+			ConnectionService.Disconnect("Live", nil, guy.Name)
+			return
+		end
+		UpdateLiveValues(board.Health, GetAlpha(hum.Health, hum.MaxHealth))
+	end, guy.Name)
+
 	if player then
-		UpdateLiveValues(board.Ultimate,GetAlpha(player:GetAttribute("Ultimate"),100))
-		ConnectionService:NewConnection("UltimateUpdate",player:GetAttributeChangedSignal("Ultimate"),"Connect","Live",function()
-			UpdateLiveValues(board.Ultimate,GetAlpha(player:GetAttribute("Ultimate"),100))
-		end)
+		UpdateLiveValues(board.Ultimate, GetAlpha(player:GetAttribute("Ultimate"), 100))
+		ConnectionService:NewConnection("UltimateUpdate", player:GetAttributeChangedSignal("Ultimate"), "Connect", "Live", function()
+			UpdateLiveValues(board.Ultimate, GetAlpha(player:GetAttribute("Ultimate"), 100))
+		end, guy.Name)
 	else
-		UpdateLiveValues(board.Ultimate,GetAlpha(0,100))
+		UpdateLiveValues(board.Ultimate, 0)
 	end
 end
 
 local function OnCounter(guy)
-	local char,hum,hrp = GetMe()
+	local char, hum, hrp = GetMe()
 	local guy, hisHum, hisHrp, player = GetInstances(guy)
-	
-	if CFrameService.GetDistance(hrp,hisHrp) < 8 then
-		local goal = CFrameService.IsBehind(hrp,hisHrp) and CFrame.new(0,0,8) or CFrame.new(0,0,-8)
-		CFrameService.Tween(hrp, hisHrp.CFrame * goal,0.3)
+
+	if CFrameService.GetDistance(hrp, hisHrp) < 8 then
+		SoundService.PlaySound("Counter")
+		SilentAimService.DisableTemporarly(CounterDuration)
+		local goal = CFrameService.IsBehind(hrp, hisHrp)
+			and CFrame.new(0, 0, 8)
+			or  CFrame.new(0, 0, -8)
+		PressKey("F",CounterDuration - 0.2)
+		CFrameService.Tween(hrp, hisHrp.CFrame * goal, 0.4,function() return hisHrp.CFrame * goal end)
 	end
-	
-	local Highlight = HighlightService:Highlight("Counter",CounterDuration)
+		
+	local sh = guy:FindFirstChild("Stare")
+	if sh then sh.Enabled = false end
+
+	local Highlight = HighlightService:Highlight("Counter", CounterDuration)
 	Highlight.Parent = hisHrp
-	
+
 	local counterFrame = hisHrp:FindFirstChild("Counters").Counter
 	counterFrame.Visible = true
-	ConnectionService:Delay(guy.Name.."-Counter",CounterDuration,function()
+
+	ConnectionService:Delay(guy.Name .. "-Counter", CounterDuration, function()
 		counterFrame.Visible = false
+		hrp.Anchored = false
+		if sh then sh.Enabled = true end
 	end)
 end
 
-LiveService.Counter = function(guy : Model)
-	local _, _, hrp : Part = GetInstances(guy)
+local function OnDeathCounter(guy)
+	local char, hum, hrp = GetMe()
+	local guy, hisHum, hisHrp, player = GetInstances(guy)
+	
+	SoundService.PlaySound("Bell")
+	
+	if CFrameService.GetDistance(hrp, hisHrp) < 8 then
+		SilentAimService.DisableTemporarly(CounterDuration)
+		local goal = CFrameService.IsBehind(hrp, hisHrp)
+			and CFrame.new(0, 0, 8)
+			or  CFrame.new(0, 0, -8)
+		PressKey("F",0.5)
+		CFrameService.Tween(hrp, hisHrp.CFrame * goal, 0.4,function() return hisHrp.CFrame * goal end)
+	end
+	
+	ConnectionService:NewConnection("AntiDeathCounter",RunService.RenderStepped,"Connect","Player",function()
+		if CFrameService.GetDistance(hrp, hisHrp) < 8 then
+			local oppositeDirection = -CFrameService.GetDirection(hisHrp.CFrame)
+			CFrameService.LookAt(hrp,oppositeDirection)
+		end
+	end)
+	
+	local sh = guy:FindFirstChild("Stare")
+	if sh then sh.Enabled = false end
+
+	local Highlight = HighlightService:Highlight("Death", DeathCounterDuration)
+	Highlight.Parent = hisHrp
+	
+	local counterFrame = hisHrp:FindFirstChild("Counters")["Death Counter"]
+	counterFrame.Visible = true
+	
+	ConnectionService:Delay(guy.Name .. "-DeathCounter", DeathCounterDuration, function()
+		counterFrame.Visible = false
+		if sh then sh.Enabled = true end
+	end)
+end
+
+LiveService.Counter = function(guy)
+	local _, _, hrp = GetInstances(guy)
 	local board = Templates.Board.Counters:Clone()
 	board.Parent = hrp
 end
 
-LiveService.Handle = function(guy : Model)
-	if guy == GetMe() then
-		return
-	end
-	local hum = guy:WaitForChild("Humanoid")
-	local hrp = guy:WaitForChild("HumanoidRootPart")
+LiveService.Handle = function(guy)
+	task.wait(1)
+	if guy == GetMe() then return end
+
+	local hum      = guy:WaitForChild("Humanoid")
+	local hrp      = guy:WaitForChild("HumanoidRootPart")
 	local animator = hum:FindFirstChildOfClass("Animator")
 
 	ConnectionService.LiveConnections[guy.Name] = {}
 
-	ConnectionService:NewConnection('ragdolled',guy.ChildAdded,"Connect","Live",function(child)
+	ConnectionService:NewConnection("ragdolled", guy.ChildAdded, "Connect", "Live", function(child)
 		if child.Name == "Ragdoll" then
-			ConnectionService.Cancel(guy.Name.."-Unragdoll")
-			guy:SetAttribute("HadRagdoll",true)
+			ConnectionService.Cancel(guy.Name .. "-Unragdoll")
+			guy:SetAttribute("HadRagdoll", true)
 		end
-	end,guy.Name)
+	end, guy.Name)
 
-	ConnectionService:NewConnection('unragdolled',guy.ChildRemoved,"Connect","Live",function(child)
+	ConnectionService:NewConnection("unragdolled", guy.ChildRemoved, "Connect", "Live", function(child)
 		if child.Name == "Ragdoll" then
-			ConnectionService:Delay(guy.Name.."-Unragdoll",0.3,function()
-				guy:SetAttribute("HadRagdoll",false)
+			ConnectionService:Delay(guy.Name .. "-Unragdoll", 0.3, function()
+				guy:SetAttribute("HadRagdoll", false)
 			end)
 		end
-	end,guy.Name)
+	end, guy.Name)
 
-	ConnectionService:NewConnection("animPlayed",animator.AnimationPlayed,"Connect","Live",function(track)
+	ConnectionService:NewConnection("animPlayed", animator.AnimationPlayed, "Connect", "Live", function(track : AnimationTrack)
 		local id = track.Animation.AnimationId
 		if SideIDS[id] or FrontIDS[id] then
 			if guy:GetAttribute("HadRagdoll") then
-				guy:SetAttribute("EvasiveCD",true)
+				guy:SetAttribute("EvasiveCD", true)
 				UpdateLiveEvasive(hrp:FindFirstChild("Values"):FindFirstChild("Evasive"))
 				guy:SetAttribute("Evasive", CooldownValues["Evasive"])
 				CountDown(CooldownValues["Evasive"], 1, function(t)
@@ -1292,33 +1415,47 @@ LiveService.Handle = function(guy : Model)
 				end, function()
 					guy:SetAttribute("Evasive", 0)
 					guy:SetAttribute("EvasiveCD", false)
-				end, guy.Name.."-Evasive", "Live", guy.Name)
+				end, guy.Name .. "-Evasive", "Live", guy.Name)
 			end
 		elseif CounterIDS[id] then
 			OnCounter(guy)
+		elseif SaitamaIDS[id] then
+			guy:SetAttribute("UsedDeath",true)
+			ConnectionService:Delay(guy.Name.."-UsedDeath",track.Length,function()
+				guy:SetAttribute("UsedDeath",false)
+			end)
 		end
-	end,guy.Name)
-
-	-- ded
+	end, guy.Name)
 
 	if hum then
-		ConnectionService:NewConnection("Died",hum.Died,"Once","Live",function()
-			ConnectionService.Disconnect("Live",nil,guy.Name)
-		end,guy.Name)	
+		ConnectionService:NewConnection("Died", hum.Died, "Once", "Live", function()
+			ConnectionService.Disconnect("Live", nil, guy.Name)
+		end, guy.Name)
 	end
 
-	ConnectionService:NewConnection("Bye Daddy",guy.AncestryChanged,"Once","Live",function()
-		ConnectionService.Disconnect("Live",nil,guy.Name)
-	end,guy.Name)
+	ConnectionService:NewConnection("Bye Daddy", guy.AncestryChanged, "Once", "Live", function()
+		ConnectionService.Disconnect("Live", nil, guy.Name)
+	end, guy.Name)
 
 	local player = Players:GetPlayerFromCharacter(guy)
-
 	if player then
-		ConnectionService:NewConnection("PlayerLeft",OnLeaving.Event,"Connect","Live",function(PlayerLeft)
+		ConnectionService:NewConnection("PlayerLeft", OnLeaving.Event, "Connect", "Live", function(PlayerLeft)
 			if player == PlayerLeft then
-				ConnectionService.Disconnect("Live",nil,guy.Name)
+				ConnectionService.Disconnect("Live", nil, guy.Name)
 			end
-		end)	
+		end, guy.Name)
+		ConnectionService:NewConnection("Ulted",player:GetAttributeChangedSignal("Ulted"),"Connect","Live",function()
+			if player:GetAttribute("Ulted") and GetMoveset(guy) == "Bald" then
+				SoundService.PlaySound("Ulted")
+				local highlight = HighlightService:Highlight("Ulted")
+				highlight.Parent = guy
+				ConnectionService.Yield(function() return not player:GetAttribute("Ulted") end,120)
+				task.wait(0.2)
+				if guy:GetAttribute("UsedDeath") then
+					OnDeathCounter(guy)
+				end
+			end
+		end)
 	end
 
 	LiveService.Info(guy)
@@ -1335,7 +1472,6 @@ end
 Live.ChildAdded:Connect(function(guy)
 	guy:WaitForChild("HumanoidRootPart")
 	guy:WaitForChild("Humanoid")
-	LiveService.Handle(guy)
 
 	task.wait(0.5)
 	if guy.Name == SilentAimService.TargetName and SilentAimService.HadTarget then
@@ -1353,27 +1489,30 @@ Live.ChildAdded:Connect(function(guy)
 			EnableStare()
 		end
 	end
+	LiveService.Handle(guy)
 end)
 
-TogglesHolder.Position = UDim2.new(1.2, -10,0.5, 0)
-TargetInfo.Position = UDim2.new(-0.3, 10,0.55, 0)
-CooldownsHolder.Position = UDim2.new(0.5, 0,-0.1, 0)
+--[[
+    Startup
+]]--
+
+TogglesHolder.Position  = UDim2.new(1.2, -10, 0.5,  0)
+TargetInfo.Position     = UDim2.new(-0.3, 10,  0.55, 0)
+CooldownsHolder.Position = UDim2.new(0.5, 0,  -0.1, 0)
 
 UI.Credit.TextTransparency = 1
-
 UI.Enabled = true
 
-TweenService:Create(TogglesHolder,TweenInfos.UI,{Position = UDim2.new(1,0,0.5,0)}):Play()
-TweenService:Create(CooldownsHolder,TweenInfos.UI,{Position = UDim2.new(0.5,0,0.1,0)}):Play()
-TweenService:Create(UI.Credit,TweenInfos.UI,{TextTransparency = 0.5}):Play()
+TweenService:Create(TogglesHolder,   TweenInfos.UI, {Position = UDim2.new(1,   0, 0.5,  0)}):Play()
+TweenService:Create(CooldownsHolder, TweenInfos.UI, {Position = UDim2.new(0.5, 0, 0.1,  0)}):Play()
+TweenService:Create(UI.Credit,       TweenInfos.UI, {TextTransparency = 0.5}):Play()
 
 UI.Credit.AncestryChanged:Once(function()
-	Plr:Kick("Dont Do That, Next Time It'll Be A Ban")
+	Plr:Kick("Dont Do That, Next Time It'll Be A Ban :3")
 end)
 
 UI.Credit.Destroying:Once(function()
-	Plr:Kick("Dont Do That, Next Time It'll Be A Ban")
+	Plr:Kick("Dont Do That, Next Time It'll Be A Ban :3")
 end)
 
--- Loaded Baby
 print("[GERP HUB]: Loaded successfully.")
