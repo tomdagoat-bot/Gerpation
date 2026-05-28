@@ -1,10 +1,7 @@
--- Objects To Lua Made By HairBaconGamming --
-local Module_Scripts = {}
 local Chant = Instance.new("Part")
 local _10 = Instance.new("ParticleEmitter")
 local _10_1 = Instance.new("ParticleEmitter")
 
--- Properties --
 Chant.Anchored = true
 Chant.CFrame = CFrame.new(-81.5, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1)
 Chant.CanCollide = false
@@ -52,6 +49,3 @@ _10_1.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0.000, 0.000
 _10_1.VelocityInheritance = 0.1
 _10_1.Name = [[10]]
 _10_1.Parent = Chant
-
--- End --
--- Thank you for using --
