@@ -1002,7 +1002,7 @@ local AllTechs = {
 		hum.AutoRotate = false
 		SilentAimService.DisableTemporarly(2)
 
-		local Offset = origin == "Front" and CFrame.new(0, 0, 12) or CFrame.new(0, 0, -12)
+		local Offset = origin == "Front" and CFrame.new(0, 0, 11) or CFrame.new(0, 0, -11)
 
 		FrontDash()
 
@@ -1029,17 +1029,17 @@ local AllTechs = {
 
 		ConnectionService.Yield(function()
 			return not targetRoot.Parent
-				or CFrameService.GetDistance(hrp, targetRoot) <= 5
+				or CFrameService.GetDistance(hrp, targetRoot) <= 4
 		end, 5)
-
-		hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0, 52, 0)
 
 		if not targetRoot.Parent then hum.AutoRotate = true return end
 
 		SilentAimService.DisableTemporarly(1)
 		CFrameService.LookAt(hrp, targetRoot.CFrame)
 
-		task.wait(0.25)
+		task.delay(0.1,function()
+			hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0, 50, 0)
+		end)
 
 		ConnectionService.Yield(function()
 			return not targetRoot.Parent
@@ -1047,9 +1047,8 @@ local AllTechs = {
 		end, 5)
 		if not targetRoot.Parent then hum.AutoRotate = true return end
 
-		SilentAimService.EnableTemporarly(0.3, targetRoot)
+		SilentAimService.EnableTemporarly(0.5, targetRoot)
 		task.wait(0.15)
-		hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0, 50, 0)
 
 		hum.AutoRotate = true
 	end,
@@ -1162,7 +1161,7 @@ local function Connect()
 						or  CFrame.new(0, 0, -4)
 					hrp.CFrame = targetRoot.CFrame * buh
 					CFrameService.LookAt(hrp,CFrame.new(0,0,-buh.Z))
-					hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0, 53, 23)
+					hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0, 53, 20)
 				end
 
 				ConnectionService:NewConnection("UppercutHit",
