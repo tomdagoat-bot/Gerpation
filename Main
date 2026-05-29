@@ -364,6 +364,7 @@ local function NearestPlayer(useMouse)
 		if entity == char then continue end
 		local root = entity:FindFirstChild("HumanoidRootPart")
 		if not root then continue end
+		if entity:FindFirstChild("Humanoid").Health <= 0 then continue end
 		local d = CFrameService.GetDistance(pos, root)
 		if d < nearestDist then
 			nearest     = entity
@@ -974,17 +975,17 @@ local AllTechs = {
 			return
 		end
 
-		TechFx("Twisted Tech")
+		TechFx("TWISTED TECH")
 		hum.AutoRotate = false
 		SilentAimService.DisableTemporarly(0.7)
 
 		FrontDash()
 
 		local cf = CFrameService.GetCFrame(root)
-		CFrameService.LookAt(root, cf * CFrame.new(6,   0,  2)) task.wait(0.1)
+		CFrameService.LookAt(root, cf * CFrame.new(6,   0,  3)) task.wait(0.1)
 		CFrameService.LookAt(root, cf * CFrame.new(8,   0, -6)) task.wait(0.1)
 		CFrameService.LookAt(root, cf * CFrame.new(0,   0,-12)) task.wait(0.3)
-		CFrameService.LookAt(root, targetRoot)                   task.wait(0.3)
+		CFrameService.LookAt(root, targetRoot)                   task.wait(0.2)
 
 		SilentAimService.EnableTemporarly(0.4, targetRoot)
 		hum.AutoRotate = true
@@ -997,13 +998,19 @@ local AllTechs = {
 			return
 		end
 
-		TechFx("Dripz Tech")
+		TechFx("DRIPZ TECH")
 		hum.AutoRotate = false
 		SilentAimService.DisableTemporarly(2)
 
 		local Offset = origin == "Front" and CFrame.new(0, 0, 12) or CFrame.new(0, 0, -12)
 
 		FrontDash()
+
+		for _, l in char:GetChildren() do
+			if l:IsA("Part") then
+				l.CanCollide = false
+			end
+		end
 
 		hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0, 53, 0)
 
@@ -1022,28 +1029,27 @@ local AllTechs = {
 
 		ConnectionService.Yield(function()
 			return not targetRoot.Parent
-				or CFrameService.GetDistance(hrp, targetRoot) <= 3
+				or CFrameService.GetDistance(hrp, targetRoot) <= 5
 		end, 5)
 
-		if not targetRoot.Parent then hum.AutoRotate = true return end
+		hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0, 52, 0)
 
-		hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0, 53, 0)
+		if not targetRoot.Parent then hum.AutoRotate = true return end
 
 		SilentAimService.DisableTemporarly(1)
 		CFrameService.LookAt(hrp, targetRoot.CFrame)
 
-		task.wait(0.2)
+		task.wait(0.25)
 
 		ConnectionService.Yield(function()
 			return not targetRoot.Parent
 				or CFrameService.GetDistance(hrp, targetRoot) >= 6
 		end, 5)
-
 		if not targetRoot.Parent then hum.AutoRotate = true return end
 
-		CFrameService.LookAt(hrp, targetRoot.CFrame)
-		task.wait(0.2)
-		CFrameService.LookAt(hrp, targetRoot.CFrame)
+		SilentAimService.EnableTemporarly(0.3, targetRoot)
+		task.wait(0.15)
+		hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0, 50, 0)
 
 		hum.AutoRotate = true
 	end,
@@ -1115,7 +1121,7 @@ TweenService:Create(MagicHealthBar.Glow, TweenInfos.UI, {ImageTransparency = 0.7
 TweenService:Create(MagicHealthBar:WaitForChild("Bar").Bar,TweenInfos.UI,{ImageColor3 = Color3.fromRGB(200, 0, 0)}):Play()
 
 local function Connect()
-	task.wait(0.3)
+	task.wait(1)
 	local char, hum, hrp = GetMe()
 	local animator = hum:WaitForChild("Animator")
 
@@ -1125,6 +1131,10 @@ local function Connect()
 	TweenService:Create(MagicHealthBar.Glow, TweenInfos.UI, {ImageTransparency = 0.7}):Play()
 	TweenService:Create(MagicHealthBar:WaitForChild("Bar").Bar,TweenInfos.UI,{ImageColor3 = Color3.fromRGB(0, 0, 0)}):Play()
 
+	for skill in pairs(CooldownValues) do
+		CooldownsHolder[skill]:FindFirstChild("Title").Text = skill
+	end
+	
 	ConnectionService:NewConnection("Died", hum.Died, "Once", "Player", function()
 		ConnectionService.Disconnect("Player")
 	end)
@@ -1152,7 +1162,7 @@ local function Connect()
 						or  CFrame.new(0, 0, -4)
 					hrp.CFrame = targetRoot.CFrame * buh
 					CFrameService.LookAt(hrp,CFrame.new(0,0,-buh.Z))
-					hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0, 53, 20)
+					hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity + Vector3.new(0, 53, 23)
 				end
 
 				ConnectionService:NewConnection("UppercutHit",
@@ -1197,11 +1207,11 @@ local function Connect()
 		end)
 
 	ConnectionService:NewConnection("Ragdolled", char.ChildAdded, "Connect", "Player", function(child)
-		if child.Name == "Ragdoll" then PauseStare() end
+		if child.Name == "Ragdoll" or child.Name == "BeingLaunched" then PauseStare() end
 	end)
 
 	ConnectionService:NewConnection("Unragdolled", char.ChildRemoved, "Connect", "Player", function(child)
-		if child.Name == "Ragdoll" then
+		if child.Name == "Ragdoll" or child.Name == "BeingLaunched" then
 			HadRagdoll = true
 			ConnectionService:Delay("Has Ragdoll", 0.2, function()
 				HadRagdoll = false
@@ -1312,6 +1322,8 @@ LiveService.Values = function(guy)
 	end
 end
 
+local StopM1 = false
+
 local function OnCounter(guy)
 	local char, hum, hrp = GetMe()
 	local guy, hisHum, hisHrp, player = GetInstances(guy)
@@ -1320,18 +1332,19 @@ local function OnCounter(guy)
 		SoundService.PlaySound("Counter")
 		SilentAimService.DisableTemporarly(CounterDuration)
 		local goal = CFrameService.IsBehind(hrp, hisHrp)
-			and CFrame.new(0, 0, 8)
-			or  CFrame.new(0, 0, -8)
-		PressKey("F",CounterDuration - 0.2)
-		CFrameService.Tween(hrp, hisHrp.CFrame * goal, 0.4,function() return hisHrp.CFrame * goal end)
+			and CFrame.new(0, 0, 9)
+			or  CFrame.new(0, 0, -9)
+		StopM1 = true
+		CFrameService.Tween(hrp, hisHrp.CFrame * goal, 0.4,hisHrp.CFrame * goal)
+	else
+		StopM1 = false
 	end
 
-	ConnectionService:NewConnection("AntiCounter",RunService.RenderStepped,"Connect","Player",function()
+	ConnectionService:NewConnection(guy.Name.."-AntiCounter",RunService.RenderStepped,"Connect","Player",function()
 		if CFrameService.GetDistance(hrp, hisHrp) < 8 then
-			local oppositeDirection = CFrameService.IsBehind(hrp, hisHrp)
-			and CFrame.new(0, 0, 8)
-			or  CFrame.new(0, 0, -8)
-			CFrameService.LookAt(hrp,hisHrp.CFrame * oppositeDirection)
+			StopM1 = true
+		else
+			StopM1 = false
 		end
 	end)
 		
@@ -1350,6 +1363,7 @@ local function OnCounter(guy)
 	
 	ConnectionService:Delay(guy.Name .. "-Counter", CounterDuration, function()
 		counterFrame.Visible = false
+		ConnectionService.Disconnect("Player", guy.Name.."-AntiCounter")
 		if sh then 
 			sh.Parent = guy 
 			sh.Enabled = true 
@@ -1366,18 +1380,19 @@ local function OnDeathCounter(guy)
 	if CFrameService.GetDistance(hrp, hisHrp) < 8 then
 		SilentAimService.DisableTemporarly(CounterDuration)
 		local goal = CFrameService.IsBehind(hrp, hisHrp)
-			and CFrame.new(0, 0, 8)
-			or  CFrame.new(0, 0, -8)
-		PressKey("F",0.5)
+			and CFrame.new(0, 0, 9)
+			or  CFrame.new(0, 0, -9)
+		StopM1 = true
 		CFrameService.Tween(hrp, hisHrp.CFrame * goal, 0.4,function() return hisHrp.CFrame * goal end)
+	else
+		StopM1 = false
 	end
 	
-	ConnectionService:NewConnection("AntiDeathCounter",RunService.RenderStepped,"Connect","Player",function()
+	ConnectionService:NewConnection(guy.Name.."-AntiDeathCounter",RunService.RenderStepped,"Connect","Player",function()
 		if CFrameService.GetDistance(hrp, hisHrp) < 8 then
-			local oppositeDirection = CFrameService.IsBehind(hrp, hisHrp)
-			and CFrame.new(0, 0, 8)
-			or  CFrame.new(0, 0, -8)
-			CFrameService.LookAt(hrp,hisHrp.CFrame * oppositeDirection)
+			StopM1 = true
+		else
+			StopM1 = false
 		end
 	end)
 	
@@ -1396,6 +1411,7 @@ local function OnDeathCounter(guy)
 	
 	ConnectionService:Delay(guy.Name .. "-DeathCounter", DeathCounterDuration, function()
 		counterFrame.Visible = false
+		ConnectionService.Disconnect("Player", guy.Name.."-AntiDeathCounter")
 		if sh then sh.Parent = guy sh.Enabled = true end
 	end)
 end
@@ -1417,15 +1433,15 @@ LiveService.Handle = function(guy)
 	ConnectionService.LiveConnections[guy.Name] = {}
 
 	ConnectionService:NewConnection("ragdolled", guy.ChildAdded, "Connect", "Live", function(child)
-		if child.Name == "Ragdoll" then
+		if child.Name == "Ragdoll" or child.Name == "BeingLaunched" then
 			ConnectionService.Cancel(guy.Name .. "-Unragdoll")
 			guy:SetAttribute("HadRagdoll", true)
 		end
 	end, guy.Name)
 
 	ConnectionService:NewConnection("unragdolled", guy.ChildRemoved, "Connect", "Live", function(child)
-		if child.Name == "Ragdoll" then
-			ConnectionService:Delay(guy.Name .. "-Unragdoll", 0.3, function()
+		if child.Name == "Ragdoll" or child.Name == "BeingLaunched" then
+			ConnectionService:Delay(guy.Name .. "-Unragdoll", 0.2, function()
 				guy:SetAttribute("HadRagdoll", false)
 			end)
 		end
@@ -1477,13 +1493,19 @@ LiveService.Handle = function(guy)
 				SoundService.PlaySound("Ulted")
 				local highlight = HighlightService:Highlight("Ulted")
 				highlight.Parent = guy
+				local sh = guy:FindFirstChild("Stare")
+				if sh then 
+					sh.Enabled = false
+					sh.Parent = ReplicatedStorage 
+				end
 				ConnectionService.Yield(function() return not guy:GetAttribute("Ulted") end,120)
-				task.wait(0.2)
-				if guy:GetAttribute("UsedDeath") then
+				task.wait(0.5)
+				if not guy:GetAttribute("UsedDeath") then
+					Warning(guy.Name.." Used Death Counter")
 					OnDeathCounter(guy)
 				end
 			end
-		end)
+		end,guy.Name)
 	end
 
 	LiveService.Info(guy)
@@ -1544,3 +1566,23 @@ UI.Credit.Destroying:Once(function()
 end)
 
 print("[GERP HUB]: Loaded successfully.")
+
+--[[
+	Remote Manipulation
+]]--
+
+setreadonly(getrawmetatable(game), false)
+
+local old
+
+old = hookmetamethod(game, "__namecall", function(self,...)
+	local method = getnamecallmethod()
+
+	local args = {...}
+
+	if self.Name == "Communicate" and method == "FireServer" then
+		if args["Goal"] == "LeftClick" and StopM1 then return end -- stop m1s
+	end
+	
+	return old(self, ...)
+end)
